@@ -593,6 +593,20 @@ G={
 	  	"onDeath": function, called when the carrying character dies
 		"countFunc": function, uses its return value for the amount of disabled, injured, or ailed that it counts for (default 1 if it isnt defined, *5 for any hard disables); a type argument is passed into it (string) between "disable", "injury", "ailment", and "out" indicating which function is calling it
   		*/
+
+		// Soul Traits (T.O.W.O.T.)
+		
+		G.glob={type:'soulTrait',def:true}
+		new G.perk({name:`soulless`,desc:``})
+		new G.perk({name:`monster soul`,desc:``})
+		new G.perk({name:`determination`,desc:``})
+		new G.perk({name:`bravery`,desc:``})
+		new G.perk({name:`justice`,desc:``})
+		new G.perk({name:`kindness`,desc:``})
+		new G.perk({name:`patience`,desc:``})
+		new G.perk({name:`integrity`,desc:``})
+		new G.perk({name:`perserverance`,desc:``})
+
 		G.glob={type:'trait',def:true};
 		new G.perk({name:`no perk`,desc:`No perk selected.`});
 		new G.perk({name:`leader`,desc:`Capable of bringing people together to accomplish great deeds.`});
@@ -823,6 +837,10 @@ G={
 		new G.perk({name:`cookie dough`,desc:`Can be consumed, or be baked into a proper batch of cookies. Premature consumption may lead to sickness.`,tier:0,init:{uses:2}});
 		new G.perk({name:`pancreas pellet`,desc:`A highly magical pellet that cures literally everything at once.`,tier:3});
 
+		// Consumables (T.O.W.O.T.)
+
+		// new G.perk({name:`doobie`,desc:`Can be smoked to temporarily get high, and can be passed around to other people.`,tier:3});
+
 		// Additional items - CS
 		new G.perk({name:`snake charmer\'s flute`,desc:`Calls forth a snake to ascend upwards indefinitely.`,tier:2});
 		new G.perk({name:`respawn anchor`,desc:`Respawn! Note: might cause deaths via [INTENTIONAL GAME DESIGN].`,tier:3});
@@ -971,11 +989,11 @@ G={
 						<li>What are you doing in my house?</li>
 					</ul>
 					<div>Now, while I'm not allowed to answer that last question due to legal reason, I can answer the first two!</div>
-
+					<br>
 					<div>I'm T.O.W.O.T.: some random user on Discord who - along with his buddies in this magical and mystical place known as the Lore Pit, a channel in a server called ACDS - found the original Murder Games by Orteil when doing some of the BrantSteele Hunger Games, then eventually stumbled upon the mod Highlighting some time after that when she decided trying to mod Murder Games using TamperMonkey was a good idea (it was not).</div>
-
+					<br>
 					<div>Now, this is a mod of Highlighting (yes, a mod of a mod) made for previously stated buddies and I, so, if you are some poor soul who accidentally stumbled upon this, there may be references to things you most likely will not know.</div>
-
+					<br>
 					<div>Good luck, and don't let seven wolves maul you to death!</div>
 					<div style="opacity:0.5;font-size:10px;float:right;">-T.O.W.O.T.</div>
 					<div style="clear:both;"></div>
@@ -1138,9 +1156,17 @@ G={
 				l(team.l.id+'-members').insertAdjacentHTML('beforeend','<div class="char hasHandle" id="dom'+domN+'"></div>');
 				char.l=l('dom'+domN);
 				
+				var soulTraitsStr=''
 				var traitsStr='';
 				var itemsStr='';
 				
+				var soulTraits=[];
+				var soulTraitsList=[];
+				for (var i in G.perks)
+				{
+					var me=G.perks[i];
+					if (me.def && me.type=='soulTrait') soulTraitsList.push(me);
+				}
 				var traits=[];
 				var traitsList=[];
 				for (var i in G.perks)
@@ -1161,6 +1187,7 @@ G={
 				
 				if (!o.perks)
 				{
+					soulTraits.push(c(soulTraitsList))
 					for (var i=0;i<minTraits;i++)
 					{
 						traits.push(c(traitsList));
@@ -1176,9 +1203,14 @@ G={
 					for (var i in o.perks)
 					{
 						var perk=G.perksBN[o.perks[i]];
-						if (perk.def && perk.type=='trait') traits.push(perk);
+						if (perk.def && perk.type=='soulTrait') soulTraits.push(perk);
+						else if (perk.def && perk.type=='trait') traits.push(perk);
 						else if (perk.def && perk.type=='item') items.push(perk);
 					}
+				}
+				if (soulTraits.length==0)
+				{
+					soulTraits.push(G.perksBN['soulless'])
 				}
 				while (traits.length<minTraits)
 				{
@@ -1190,6 +1222,12 @@ G={
 				}
 				
 				var n=0;
+
+				for (var i=0;i<traits.length;i++)
+				{
+					soulTraitsStr+=`${perkSelector('soulTrait',char.l.id+'-perk-'+n,soulTraits[i])} `;
+					n++;
+				}
 				for (var i=0;i<traits.length;i++)
 				{
 					traitsStr+=`${perkSelector('trait',char.l.id+'-perk-'+n,traits[i])} `;
@@ -1210,7 +1248,7 @@ G={
 					<select id="${char.l.id+'-tier'}"><option title="Character acts every round." value="0"${char.tier==0?' selected="selected"':''}>main</option><option title="Character only acts every now and then." value="1"${char.tier==1?' selected="selected"':''}>minor</option></select> 
 					Pic URL : <input type="text" size="24" id="${char.l.id+'-picUrl'}" value="${char.pic}"/> 
 					<br>
-					Perks : ${traitsStr} Item : ${itemsStr} 
+					Perks : ${traitsStr} Item : ${itemsStr} Soul Trait : ${soulTraitsStr} 
 				`;
 				addEvent(l(char.l.id+'-delete'),'click',function(){
 					team.members.splice(team.members.indexOf(char),1);
@@ -1283,9 +1321,10 @@ G={
 						<div class="picBox"><img src="${me.pic}" class="pic" title="${me.name}"/>${me.has('dead')?'<div class="picSkull"></div>':''}</div>
 						<div style="text-align:center;">
 							<e style="float:left;margin-right:8px;">${me.name}</e>
+							<div style="min-width:32%;display:inline-block;"><cap>Perks :</cap> ${me.perks.map(perk=>(perk.perk.type=='soulTrait')?('<div class="bit" title="'+perk.desc+'">'+perk.perk.name+'</div>'):'').join(' ')}</div>
 							<div style="min-width:32%;display:inline-block;"><cap>Perks :</cap> ${me.perks.map(perk=>(perk.perk.type=='trait' && perk.perk.name!='no perk')?('<div class="bit" title="'+perk.desc+'">'+perk.perk.name+'</div>'):'').join(' ')}</div>
 							<div style="min-width:32%;display:inline-block;"><cap>Items :</cap> ${me.perks.map(perk=>(perk.perk.type=='item' && perk.perk.name!='no item')?('<div class="bit" title="'+perk.desc+'">'+perk.perk.name+'</div>'):'').join(' ')}</div>
-							<div style="min-width:32%;display:inline-block;"><cap>Other :</cap> ${me.perks.map(perk=>(perk.perk.type!='item' && perk.perk.type!='trait')?('<div class="bit" title="'+perk.desc+'">'+perk.perk.name+'</div>'):'').join(' ')}</div>
+							<div style="min-width:32%;display:inline-block;"><cap>Other :</cap> ${me.perks.map(perk=>(perk.perk.type!='item' && perk.perk.type!='trait' && perk.perk.type!='soulTrait')?('<div class="bit" title="'+perk.desc+'">'+perk.perk.name+'</div>'):'').join(' ')}</div>
 						</div>
 						${me.kills.length>0?('<div style="color:#e2461f;">Killed '+me.kills.length+' (<e>'+me.kills.map(char=>char.name).join(', ')+'</e>)</div>'):''}
 						${(me.killer.length>0 && me.has('dead'))?('<div style="color:#e2461f;">Dead, killed by <e>'+me.killer.map(char=>char.name).join(', ')+'</e> ('+me.deathReason+')</div>'):''}
@@ -1941,7 +1980,7 @@ G={
 			new G.act(1,['scrappy'],`[1] [looks around for stuff to scrounge|spots something shiny in the distance].`);
 			new G.act(1,['survivalist deaths:0'],`[1] [came prepared|could get used to this place].`);
 				new G.act(1,['survivalist|stubborn%0.5|any%0.2 !naive|suicidal deaths:>0'],`[1] [is determined to survive this|won't die like the others|won't give up so easily].`);
-			new G.act(1,['rich'],`[1] [feels protected by [1:their] wealth|finds all this below his concern].`);
+			new G.act(1,['rich'],`[1] [feels protected by [1:their] wealth|finds all this below [1:their] concern].`);
 			new G.act(1,['inventor'],`[1] [is thinking of plans to get out of here|is cooking up a genius idea].`);
 				new G.act(0.5,['inventor|any%0.2','+ scrappy|any%0.2'],`[1] asks [2] if [2:g|he's|she's|they've|it has] found anything useful.`);
 			new G.act(1,['goth'],`[1] [mopes around uselessly|thinks of a dark, dark poem].`);
@@ -2258,29 +2297,29 @@ G={
 			new G.act(lootDeadMult*0.05,[itemThief+' any !extreme_cinnamon_soda','extreme_cinnamon_soda dead !nihil'],`[BLUE][1] found a bottle of what appears to be flavored soda on [2]!<br>Thinking that it could be useful in a pinch, [1] takes it.`,p=>{p[2].give(p[1], 'extreme cinnamon soda');});
 			
             // Rich AirDrop! -TW
-            new G.act(airDropMult*0.2,['rich !dapper_suit|survivalist%0.5'],`[BLUE][1] uses their financial connections to smuggle an airdrop.<br>Inside the package, [1] finds a fresh change of clothes. The dapper suit is quite fetching.`,p=>{p[1].gain('dapper suit');});
-            new G.act(airDropMult*0.05,['rich marksmen|vigilant%0.5|any%0.5 !handgun|peaceful%0.5'],`[BLUE][1] uses their financial connections to smuggle an airdrop.<br>Inside the package, [1] finds a handgun with plenty of ammo!`,p=>{p[1].gain('handgun');});
-            new G.act(airDropMult*0.05,['rich annoying|vigilant%0.5|any%0.5 !grenade|peaceful%0.5'],`[BLUE][1] uses their financial connections to smuggle an airdrop.<br>Inside the package, [1] finds a single grenade...`,p=>{p[1].gain('grenade');});
-            new G.act(airDropMult*0.04,['rich marksmen|vigilant%0.5|any%0.5 !shotgun|peaceful%0.5'],`[BLUE][1] uses their financial connections to smuggle an airdrop.<br>Inside the package, [1] finds a shotgun and shells!`,p=>{p[1].gain('shotgun');});
-            new G.act(airDropMult*0.01,['rich sociopath|vigilant%0.5|any%0.5 !rocket_launcher|peaceful%0.5'],`[BLUE][1] uses their financial connections to smuggle an airdrop.<br>Inside the package, [1] finds a whole rocket launcher! Now that's a game changer!`,p=>{p[1].gain('rocket launcher');});
-            new G.act(airDropMult*0.02,['rich pyromania|vigilant%0.5|any%0.5 !flamethrower|peaceful%0.5'],`[BLUE][1] uses their financial connections to smuggle an airdrop.<br>Inside the package, [1] finds a dangerous looking flamethrower`,p=>{p[1].gain('flamethrower');});
-            new G.act(airDropMult*0.03,['rich bulky|vigilant%0.5|any%0.5 !combat_gear|meek%0.5'],`[BLUE][1] uses their financial connections to smuggle an airdrop.<br>Inside the package, [1] finds a complete suit of tactical combat gear!`,p=>{p[1].gain('combat gear');});
-			new G.act(airDropMult*0.1,['rich medic|vigilant%0.5|any%0.5 !first_aid_kit|suicidal%0.5'],`[BLUE][1] uses their financial connections to smuggle an airdrop.<br>Inside the package, [1] finds a kit of first aid supplies.`,p=>{p[1].gain('first aid kit');});
-			new G.act(airDropMult*0.06,['rich the_gift|vigilant%0.5|any%0.5 !freezing_sapphire|topaz_on_a_stick|topaz_with_a_hole'],`[BLUE][1] uses their financial connections to smuggle an airdrop.<br>Inside the package, [1] finds two gems - literally, one sapphire and one topaz.`,p=>{p[1].gain('freezing sapphire');p[1].gain('topaz with a hole');});
-			new G.act(airDropMult*0.03,['rich goth|the_gift%0.5|vigilant%0.5|any%0.5 !respawn_anchor|will_respawn'],`[BLUE][1] uses their financial connections to smuggle an airdrop.<br>Inside the package, [1] finds a mysterious cauldrun, with myths about its life-anchoring powers.`,p=>{p[1].gain('respawn anchor');});
-			new G.act(airDropMult*0.03,['rich the_gift|vigilant%0.5|any%0.5 !angel_in_a_bottle|angel\'s_revival|goth%0.5'],`[BLUE][1] uses their financial connections to smuggle an airdrop.<br>Inside the package, [1] finds a promising, glowing bottle, not to be opened until the last moment of life.`,p=>{p[1].gain('angel in a bottle');});
+            new G.act(airDropMult*0.2,['rich !dapper_suit|survivalist%0.5'],`[BLUE][1] uses [1:their] financial connections to smuggle an airdrop.<br>Inside the package, [1] finds a fresh change of clothes. The dapper suit is quite fetching.`,p=>{p[1].gain('dapper suit');});
+            new G.act(airDropMult*0.05,['rich marksmen|vigilant%0.5|any%0.5 !handgun|peaceful%0.5'],`[BLUE][1] uses [1:their] financial connections to smuggle an airdrop.<br>Inside the package, [1] finds a handgun with plenty of ammo!`,p=>{p[1].gain('handgun');});
+            new G.act(airDropMult*0.05,['rich annoying|vigilant%0.5|any%0.5 !grenade|peaceful%0.5'],`[BLUE][1] uses [1:their] financial connections to smuggle an airdrop.<br>Inside the package, [1] finds a single grenade...`,p=>{p[1].gain('grenade');});
+            new G.act(airDropMult*0.04,['rich marksmen|vigilant%0.5|any%0.5 !shotgun|peaceful%0.5'],`[BLUE][1] uses [1:their] financial connections to smuggle an airdrop.<br>Inside the package, [1] finds a shotgun and shells!`,p=>{p[1].gain('shotgun');});
+            new G.act(airDropMult*0.01,['rich sociopath|vigilant%0.5|any%0.5 !rocket_launcher|peaceful%0.5'],`[BLUE][1] uses [1:their] financial connections to smuggle an airdrop.<br>Inside the package, [1] finds a whole rocket launcher! Now that's a game changer!`,p=>{p[1].gain('rocket launcher');});
+            new G.act(airDropMult*0.02,['rich pyromania|vigilant%0.5|any%0.5 !flamethrower|peaceful%0.5'],`[BLUE][1] uses [1:their] financial connections to smuggle an airdrop.<br>Inside the package, [1] finds a dangerous looking flamethrower`,p=>{p[1].gain('flamethrower');});
+            new G.act(airDropMult*0.03,['rich bulky|vigilant%0.5|any%0.5 !combat_gear|meek%0.5'],`[BLUE][1] uses [1:their] financial connections to smuggle an airdrop.<br>Inside the package, [1] finds a complete suit of tactical combat gear!`,p=>{p[1].gain('combat gear');});
+			new G.act(airDropMult*0.1,['rich medic|vigilant%0.5|any%0.5 !first_aid_kit|suicidal%0.5'],`[BLUE][1] uses [1:their] financial connections to smuggle an airdrop.<br>Inside the package, [1] finds a kit of first aid supplies.`,p=>{p[1].gain('first aid kit');});
+			new G.act(airDropMult*0.06,['rich the_gift|vigilant%0.5|any%0.5 !freezing_sapphire|topaz_on_a_stick|topaz_with_a_hole'],`[BLUE][1] uses [1:their] financial connections to smuggle an airdrop.<br>Inside the package, [1] finds two gems - literally, one sapphire and one topaz.`,p=>{p[1].gain('freezing sapphire');p[1].gain('topaz with a hole');});
+			new G.act(airDropMult*0.03,['rich goth|the_gift%0.5|vigilant%0.5|any%0.5 !respawn_anchor|will_respawn'],`[BLUE][1] uses [1:their] financial connections to smuggle an airdrop.<br>Inside the package, [1] finds a mysterious cauldrun, with myths about its life-anchoring powers.`,p=>{p[1].gain('respawn anchor');});
+			new G.act(airDropMult*0.03,['rich the_gift|vigilant%0.5|any%0.5 !angel_in_a_bottle|angel\'s_revival|goth%0.5'],`[BLUE][1] uses [1:their] financial connections to smuggle an airdrop.<br>Inside the package, [1] finds a promising, glowing bottle, not to be opened until the last moment of life.`,p=>{p[1].gain('angel in a bottle');});
 			
-            new G.act(airDropMult*0.2,['rich !dapper_suit%0.5|survivalist%0.5|vigilant','- !dapper_suit%0.8|survivalist%0.5'+itemThief],`[BLUE][1] uses their financial connections to smuggle an airdrop, but [2] steals it before [1] can find it!<br>Inside the package, [2] finds a fresh change of clothes. The dapper suit is quite fettching.`,p=>{p[2].gain('dapper suit');});
-            new G.act(airDropMult*0.05,['rich marksmen|any%0.5 !shotgun%0.5|peaceful%0.5|vigilant','- !handgun%0.8|peaceful%0.5'+itemThief],`[BLUE][1] uses their financial connections to smuggle an airdrop, but [2] steals it before [1] can find it!<br>Inside the package, [2] finds a handgun with plenty of ammo!`,p=>{p[2].gain('handgun');});
-            new G.act(airDropMult*0.05,['rich annoying|any%0.5 !grenade%0.5|peaceful%0.5|vigilant','- !grenade%0.8|peaceful%0.5'+itemThief],`[BLUE][1] uses their financial connections to smuggle an airdrop, but [2] steals it before [1] can find it!<br>Inside the package, [2] finds a single grenade...`,p=>{p[2].gain('grenade');});
-            new G.act(airDropMult*0.04,['rich marksmen|any%0.5 !shotgun%0.5|peaceful%0.5|vigilant','- !shotgun%0.8|peaceful%0.5'+itemThief],`[BLUE][1] uses their financial connections to smuggle an airdrop, but [2] steals it before [1] can find it!<br>Inside the package, [2] finds a shotgun and shells!`,p=>{p[2].gain('shotgun');});
-            new G.act(airDropMult*0.01,['rich sociopath|any%0.5 !rocket_launcher%0.5|peaceful%0.5|vigilant','- !rocket_launcher%0.8|peaceful%0.5'+itemThief],`[BLUE][1] uses their financial connections to smuggle an airdrop, but [2] steals it before [1] can find it!<br>Inside the package, [2] finds a whole rocket launcher! Now that's a game changer!`,p=>{p[2].gain('rocket launcher');});
-            new G.act(airDropMult*0.02,['rich pyromania|any%0.5 !flamethrower%0.5|peaceful%0.5|vigilant','- !flamethrower%0.8|peaceful%0.5'+itemThief],`[BLUE][1] uses their financial connections to smuggle an airdrop, but [2] steals it before [1] can find it!<br>Inside the package, [2] finds a dangerous looking flamethrower`,p=>{p[2].gain('flamethrower');});
-            new G.act(airDropMult*0.03,['rich bulky|any%0.5 !combat_gear%0.5|meek%0.5|vigilant','- !combat_gear%0.8|meek%0.5'+itemThief],`[BLUE][1] uses their financial connections to smuggle an airdrop, but [2] steals it before [1] can find it!<br>Inside the package, [2] finds a complete suit of tactical combat gear!`,p=>{p[2].gain('combat gear');});
-			new G.act(airDropMult*0.1,['rich medic|any%0.5 !first_aid_kit%0.5|suicidal%0.5|vigilant','- !first_aid_kit%0.8|suicidal%0.5'+itemThief],`[BLUE][1] uses their financial connections to smuggle an airdrop, but [2] steals it before [1] can find it!<br>Inside the package, [2] finds a kit of first aid supplies.`,p=>{p[2].gain('first aid kit');});
-			new G.act(airDropMult*0.06,['rich the_gift|any%0.5 !freezing_sapphire|topaz_on_a_stick|topaz_with_a_hole|vigilant','- !freezing_sapphire|topaz_on_a_stick|topaz_with_a_hole%1'+itemThief],`[BLUE][1] uses their financial connections to smuggle an airdrop, but [2] steals it before [1] can find it!<br>Inside the package, [2] finds two gems - literally, one sapphire and one topaz.`,p=>{p[2].gain('freezing sapphire');p[2].gain('topaz with a hole');});
-			new G.act(airDropMult*0.03,['rich goth|the_gift%0.5|any%0.5 !respawn_anchor|will_respawn|vigilant','- !respawn_anchor|will_respawn|goth%0.5'+itemThief],`[BLUE][1] uses their financial connections to smuggle an airdrop, but [2] steals it before [1] can find it!<br>Inside the package, [2] finds a mysterious cauldrun, with myths about its life-anchoring powers.`,p=>{p[2].gain('respawn anchor');});
-			new G.act(airDropMult*0.03,['rich the_gift|vigilant%0.5|any%0.5 !angel_in_a_bottle|angel\'s_revival|goth%0.5','- !angel_in_a_bottle|angel\'s_revival|the_gift%0.5'+itemThief],`[BLUE][1] uses their financial connections to smuggle an airdrop, but [2] steals it before [1] can find it!<br>Inside the package, [2] finds a promising, glowing bottle, not to be opened until the last moment of life.`,p=>{p[2].gain('angel in a bottle');});
+            new G.act(airDropMult*0.2,['rich !dapper_suit%0.5|survivalist%0.5|vigilant','- !dapper_suit%0.8|survivalist%0.5'+itemThief],`[BLUE][1] uses [1:their] financial connections to smuggle an airdrop, but [2] steals it before [1] can find it!<br>Inside the package, [2] finds a fresh change of clothes. The dapper suit is quite fettching.`,p=>{p[2].gain('dapper suit');});
+            new G.act(airDropMult*0.05,['rich marksmen|any%0.5 !shotgun%0.5|peaceful%0.5|vigilant','- !handgun%0.8|peaceful%0.5'+itemThief],`[BLUE][1] uses [1:their] financial connections to smuggle an airdrop, but [2] steals it before [1] can find it!<br>Inside the package, [2] finds a handgun with plenty of ammo!`,p=>{p[2].gain('handgun');});
+            new G.act(airDropMult*0.05,['rich annoying|any%0.5 !grenade%0.5|peaceful%0.5|vigilant','- !grenade%0.8|peaceful%0.5'+itemThief],`[BLUE][1] uses [1:their] financial connections to smuggle an airdrop, but [2] steals it before [1] can find it!<br>Inside the package, [2] finds a single grenade...`,p=>{p[2].gain('grenade');});
+            new G.act(airDropMult*0.04,['rich marksmen|any%0.5 !shotgun%0.5|peaceful%0.5|vigilant','- !shotgun%0.8|peaceful%0.5'+itemThief],`[BLUE][1] uses [1:their] financial connections to smuggle an airdrop, but [2] steals it before [1] can find it!<br>Inside the package, [2] finds a shotgun and shells!`,p=>{p[2].gain('shotgun');});
+            new G.act(airDropMult*0.01,['rich sociopath|any%0.5 !rocket_launcher%0.5|peaceful%0.5|vigilant','- !rocket_launcher%0.8|peaceful%0.5'+itemThief],`[BLUE][1] uses [1:their] financial connections to smuggle an airdrop, but [2] steals it before [1] can find it!<br>Inside the package, [2] finds a whole rocket launcher! Now that's a game changer!`,p=>{p[2].gain('rocket launcher');});
+            new G.act(airDropMult*0.02,['rich pyromania|any%0.5 !flamethrower%0.5|peaceful%0.5|vigilant','- !flamethrower%0.8|peaceful%0.5'+itemThief],`[BLUE][1] uses [1:their] financial connections to smuggle an airdrop, but [2] steals it before [1] can find it!<br>Inside the package, [2] finds a dangerous looking flamethrower`,p=>{p[2].gain('flamethrower');});
+            new G.act(airDropMult*0.03,['rich bulky|any%0.5 !combat_gear%0.5|meek%0.5|vigilant','- !combat_gear%0.8|meek%0.5'+itemThief],`[BLUE][1] uses [1:their] financial connections to smuggle an airdrop, but [2] steals it before [1] can find it!<br>Inside the package, [2] finds a complete suit of tactical combat gear!`,p=>{p[2].gain('combat gear');});
+			new G.act(airDropMult*0.1,['rich medic|any%0.5 !first_aid_kit%0.5|suicidal%0.5|vigilant','- !first_aid_kit%0.8|suicidal%0.5'+itemThief],`[BLUE][1] uses [1:their] financial connections to smuggle an airdrop, but [2] steals it before [1] can find it!<br>Inside the package, [2] finds a kit of first aid supplies.`,p=>{p[2].gain('first aid kit');});
+			new G.act(airDropMult*0.06,['rich the_gift|any%0.5 !freezing_sapphire|topaz_on_a_stick|topaz_with_a_hole|vigilant','- !freezing_sapphire|topaz_on_a_stick|topaz_with_a_hole%1'+itemThief],`[BLUE][1] uses [1:their] financial connections to smuggle an airdrop, but [2] steals it before [1] can find it!<br>Inside the package, [2] finds two gems - literally, one sapphire and one topaz.`,p=>{p[2].gain('freezing sapphire');p[2].gain('topaz with a hole');});
+			new G.act(airDropMult*0.03,['rich goth|the_gift%0.5|any%0.5 !respawn_anchor|will_respawn|vigilant','- !respawn_anchor|will_respawn|goth%0.5'+itemThief],`[BLUE][1] uses [1:their] financial connections to smuggle an airdrop, but [2] steals it before [1] can find it!<br>Inside the package, [2] finds a mysterious cauldrun, with myths about its life-anchoring powers.`,p=>{p[2].gain('respawn anchor');});
+			new G.act(airDropMult*0.03,['rich the_gift|vigilant%0.5|any%0.5 !angel_in_a_bottle|angel\'s_revival|goth%0.5','- !angel_in_a_bottle|angel\'s_revival|the_gift%0.5'+itemThief],`[BLUE][1] uses [1:their] financial connections to smuggle an airdrop, but [2] steals it before [1] can find it!<br>Inside the package, [2] finds a promising, glowing bottle, not to be opened until the last moment of life.`,p=>{p[2].gain('angel in a bottle');});
             
 			// Crafting for self -TW
 			new G.act(itemCraftMult*0.04,['scrap_metal scrappy%0.2|artist%0.3|any%0.5 !big_stick|peaceful|inventor%0.2'],`[BLUE][1] attaches [1:their] metal scraps to a stick, making a big, crude, club`,p=>{p[1].gain('big stick');p[1].lose('scrap metal');});
@@ -5094,7 +5133,7 @@ G={
 			});
 			new G.move({
 				chance: 3, //normal move that dont have comically low fail rates and unusually high kill rates
-				text: '[1] uses their [ominous|strange|creepy] knife to stab [2][S]!',
+				text: '[1] uses [1:their] [ominous|strange|creepy] knife to stab [2][S]!',
 				failText: '[1] tries to use their [ominous|strange|creepy] knife to stab [2], but [2] [blocked it|got out of the way].',
 				fail: function(cl) { return cl[1].adjust(this.adjust(0.15, 'stabAccuracy'), 'dodge'); },
 				func: function(cl) { this.combat.moveInFrontOf(cl[1], Math.random() + 1); },
@@ -7162,7 +7201,7 @@ G={
 						return G.moveAssets.hardHeadHit().call(this, cl, text.replace('[T]', '[wacks|hits] [2] on the head'));
 					}
 				},
-				pReq: ['e:5']
+				pReq: ['e:10']
 			});
 			
 			G.parse = function(text,actors)
