@@ -789,6 +789,9 @@ G={
 		new G.perk({name:`tourniquet`,desc:`You might lose a limb, but you won't lose your life.`,tier:1});
 		new G.perk({name:`AED`,desc:`Can potentially bring back someone who was thought dead.`,tier:2});
 		
+		// Additional Items (T.O.W.O.T.)
+		new G.perk({name:`frying pan`,desc:`A piece of kitchenware that is quite effective in combat.`,tier:1});
+
         // Default Armors -TW
 		new G.perk({name:`leather scraps`,desc:`Tribal-looking clothing. Provides minimal protection.`,tier:0});
 		new G.perk({name:`bikini`,desc:`Quite alluring, but not much help in combat situations.`,tier:0});
@@ -2031,6 +2034,10 @@ G={
             new G.act(0.2,['magic_dust artist|cute%0.5|naive%0.5|any%0.5 !goth|survivalist|analytical%0.5|inventor%0.5'],`[1] decorates some stuff with their magic dust.<br>The sparkles will never come out of that now.`);
 				new G.act(0.1,['magic_dust analytical|inventor|any%0.2 !naive'],`[1] tries to study [1:their] magic dust [with reason|scientifically|carefully] but its [properties|colors|effects] keep changing`);
 			new G.act(0.2,['roll_of_fabric artist|cute%0.5|any%0.5'],`[1] [wraps [1:themself] in|cuts pieces out of|considers what to make with] [1:their] fabrics.`);
+
+			// Additional Item Idling (T.O.W.O.T.)
+			new G.act(0.5,['frying pan'],`[1] wonders what [1:they] could cook with [1:their] frying pan.`);
+
 			// Status Effect Idling - TW
 			// // Minor Status Effects
 			new G.act(0.5,['scratched !first_aid_kit%0.5|bulky%0.5|stubborn%0.5'],`[1] [winces|worries|checks over [1:themself]] as [1:their] scratches [burn a little|bother [1:them]|sting steadily].`);
@@ -2114,6 +2121,10 @@ G={
 			new G.act(newItemMult*0.02,['scrappy%0.5|vigilant%0.2|lucky_coin%0.2|the_gift%0.3|vigilant%0.2 !topaz_with_a_hole|topaz_on_a_stick|goth%0.2|naive%0.5'],`[BLUE][1] notices something shiny on the ground. <br>Thinking it was a coin, [1:they] picks it up purely out of boredom, but then realizes that it is actually a piece of brilliantly cut topaz with a hole on one side. This could be useful, but [1:they] don\'t quite yet know why...`,p=>{p[1].gain('topaz with a hole');});
 			new G.act(newItemMult*0.02,['scrappy%0.5|vigilant%0.2|lucky_coin%0.2|ninja%0.5|survivalist%0.2|any%0.5 !shuriken !peaceful'],`[BLUE][1] finds a [bundle|box|pile] of throwing weapons, including some knives and shuriken.<br>[1] is already practicing with a few tosses.`,p=>{p[1].gain('shuriken');});
 			new G.act(newItemMult*0.01,['scrappy%0.5|suicidal%0.5|sociopath%0.2|goth%0.2|any%0.5 !cursed_knife|lucky_coin%0.8|survivalist%0.5|peaceful%0.5'],`[RED][1] finds an old knife with dried blood.<br>Once [1:they] pick it up, they can't seem to get rid of it...`,p=>{p[1].gain('cursed knife');});
+
+			// Weapons (T.O.W.o.T.)
+			new G.act(newItemMult*0.03,['scrappy%0.5|vigilant%0.2|lucky_coin%0.2|bulky%0.2|survivalist%0.2|any%0.5 !frying_pan !peaceful%0.8|naive%0.2'],`[BLUE][1] finds a frying pan - great for both cooking food and wacking people with.`,p=>{p[1].gain('frying pan');});
+
             //Other Stuff (30%) -TW
 			new G.act(newItemMult*0.01,['scrappy%0.2|vigilant%0.2|lucky_coin%0.2|peaceful%0.2|the_gift%0.5|any%0.5 !wish_ring'],`[BLUE][1] was lost in [1:their] thoughts... The next thing [1:g|he knows|she knows|they know|it knows], [1:g|he's|she's|they've|it has] found a wish ring.<br>Hopefully [1:they]'ll be responsible with it.`,p=>{p[1].gain('wish ring');});
 			
@@ -2171,10 +2182,14 @@ G={
 			
 			// Theft - TW & Nyan Cat (& CursedSliver for adding the new items)
 			// - Melee
-			new G.act(lootDeadMult*0.025,[itemThief+' !peaceful|pitchfork|naive%0.5|meek%0.2','pitchfork dead !nihil'],`[BLUE][1] [stops in their tracks|freezes in fear|gasps in surprise] when [1:they] stumble upon [2]'s lifeless body.<br>Fearing for [1:their] own safety, [1] [grabs|takes|loots] the nearby pitchfork [from the ground|from [2]].`,p=>{p[1].gain('pitchfork');p[2].lose('pitchfork');});
+			new G.act(lootDeadMult*0.025,[itemThief+' !peaceful|pitchfork|naive%0.5|meek%0.2','pitchfork dead !nihil'],`[BLUE][1] [stops in [1:their] tracks|freezes in fear|gasps in surprise] when [1:they] stumble upon [2]'s lifeless body.<br>Fearing for [1:their] own safety, [1] [grabs|takes|loots] the nearby pitchfork [from the ground|from [2]].`,p=>{p[1].gain('pitchfork');p[2].lose('pitchfork');});
 			new G.act(lootDeadMult*0.025,[itemThief+' ninja|any%0.8 !peaceful|sword|naive%0.5|meek%0.2','sword dead !nihil'],`[BLUE][1] [spots|discovers|notices] [2]'s [bloodied|rusty|ornate] sword lying nearby.<br>Feeling that [1:they] could put it to better use, [1] [grabs|takes|loots] it [from the ground|from [2]].`,p=>{p[1].gain('sword');p[2].lose('sword');});
 			new G.act(lootDeadMult*0.025,[itemThief+' survivalist|any%0.8 !peaceful|axe|naive%0.5|meek%0.2','axe dead !nihil'],`[BLUE][1] [stumbles upon|finds|comes across] [2]'s [heavy|sharp|old] axe lying nearby.<br>[1:They] feel[s] that it could be useful in the harsh wilderness, and [grabs|takes|loots] it [from the ground|from [2]].`,p=>{p[1].gain('axe');p[2].lose('axe');});
-			new G.act(lootDeadMult*0.05,[itemThief+' goth%0.5|ninja%0.5|naive%0.5|any%0.5 !peaceful%0.8|cursed_knife','cursed_knife dead !nihil'],`[RED][1] [notices|spots|discovers] [2]'s [ominous|freaky|bloodied] knife lying nearby.<br>Despite feeling uneasy about it, [1] [grabs|takes|loots] it [from the ground|from [2]], hoping to use it to [2:their] advantage.`,p=>{p[1].gain('cursed knife');p[2].lose('cursed knife');});
+			new G.act(lootDeadMult*0.05,[itemThief+' goth%0.5|ninja%0.5|naive%0.5|any%0.5 !peaceful%0.8|cursed_knife','cursed_knife dead !nihil'],`[RED][1] [notices|spots|discovers] [2]'s [ominous|freaky|bloodied] knife lying nearby.<br>Despite feeling uneasy about it, [1] [grabs|takes|loots] it [from the ground|from [2]], hoping to use it to [1:their] advantage.`,p=>{p[1].gain('cursed knife');p[2].lose('cursed knife');});
+
+			// - Melee (T.O.W.O.T.)
+			new G.act(lootDeadMult*0.025,[itemThief+' !survivalist|any%0.8 !peaceful|frying_pan|naive%0.5|meek%0.2','frying_pan dead !nihil'],`[BLUE][1] [notices|finds|spots] a frying pan nearby [2]'s lifeless body.<br>Thinking [1:tey] may be able to use it better, [1] [grabs|takes|loots] the frying pan [from the ground|from [2]].`,p=>{p[1].gain('frying pan');p[2].lose('frying pan');});
+
 			// - Ranged
 			new G.act(lootDeadMult*0.025,[itemThief+' annoying|any%0.8 !peaceful|slingshot|naive%0.5','slingshot dead !nihil'],`[BLUE][1] [spies|sees|notices] a [tattered|frayed|handmade] slingshot next to [2]'s body.<br>[1:They] [grabs|takes|loots] it [from the ground|from [2]], thinking it could be a useful tool for hunting or defending [1:themself].`,p=>{p[1].gain('slingshot');p[2].lose('slingshot');});
 			new G.act(lootDeadMult*0.025,[itemThief+' ninja%0.8|marksmen%0.5|any%0.5 !peaceful|shuriken|naive%0.5','shuriken dead !nihil'],`[BLUE][1] [notices|spots|sees] some [gleaming|shiny|sharp] [shurikens|throwing knives] lying near [2]\'s body.<br>Quickly, [1:they] [grab|take|loot] them [from the ground|from [2]], thinking they could come in handy in [1:their] next fight.`,p=>{p[1].gain('shuriken');p[2].lose('shuriken');});
@@ -2249,7 +2264,7 @@ G={
             
 			// Crafting for self -TW
 			new G.act(itemCraftMult*0.04,['scrap_metal scrappy%0.2|artist%0.3|any%0.5 !big_stick|peaceful|inventor%0.2'],`[BLUE][1] attaches [1:their] metal scraps to a stick, making a big, crude, club`,p=>{p[1].gain('big stick');p[1].lose('scrap metal');});
-				new G.act(itemCraftMult*0.03,['scrap_metal scrappy%0.2|artist%032|any%0.5 !pitchfork|peaceful%0.5|inventor%0.5'],`[BLUE][1] fashions a new pitchfork from [1:their] scrap metal.<br>Turns out most of the scrap was from some farm tools.`,p=>{p[1].gain('pitchfork');p[1].lose('scrap metal');});
+				new G.act(itemCraftMult*0.03,['scrap_metal scrappy%0.2|artist%0.2|any%0.5 !pitchfork|peaceful%0.5|inventor%0.5'],`[BLUE][1] fashions a new pitchfork from [1:their] scrap metal.<br>Turns out most of the scrap was from some farm tools.`,p=>{p[1].gain('pitchfork');p[1].lose('scrap metal');});
 				new G.act(itemCraftMult*0.025,['scrap_metal inventor%0.5|scrappy%0.2|artist%0.3|any%0.5 !sword|peaceful'],`[BLUE][1] forges the spare metal [1:they] found into a fine blade<br>[1] practices swinging it around in the air.`,p=>{p[1].gain('sword');p[1].lose('scrap metal');});
 				new G.act(itemCraftMult*0.025,['scrap_metal inventor%0.5|scrappy%0.2|artist%0.3|any%0.5 !axe|peaceful'],`[BLUE][1] takes the time to forge an axe head out of [1:their] spare chunks of metal.<br>The new axe is crude, but effective.`,p=>{p[1].gain('axe');p[1].lose('scrap metal');});
 				new G.act(itemCraftMult*0.025,['scrap_metal inventor%0.5|scrappy%0.2|artist%0.3|any%0.5 !shuriken|peaceful'],`[BLUE][1] forges the scraps of metal into various throwing knives.<br>They may not all match, but they should still be deadly.`,p=>{p[1].gain('knight armor');p[1].lose('scrap metal');});
@@ -2281,6 +2296,11 @@ G={
 				new G.act(itemCraftMult*0.03,['roll_of_fabric scrap_metal inventor%0.5|scrappy%0.2|artist%0.2|any%0.5 !combat_gear'],`[BLUE][1] realizes some of the fabric is kevlar!<br>With some forged scrap metal and full body tailoring, the new combat gear looks ready for war!`,p=>{p[1].gain('combat gear');p[1].lose('roll of fabric');p[1].lose('scrap metal');});
 				new G.act(itemCraftMult*0.01,['magic_dust scrap_metal inventor%0.5|scrappy%0.2|the_gift%0.5|artist%0.2|any%0.5 !wish_ring'],`[BLUE][1] forges [1:their] metal scraps into a ring, and cools it in the magic dust.<br>It sparkles softly in the light...`,p=>{p[1].gain('wish ring');p[1].lose('magic dust');p[1].lose('scrap metal');});
 				new G.act(itemCraftMult*0.03,['magic_dust roll_of_fabric inventor%0.5|scrappy%0.2|the_gift%0.5|artist%0.5|any%0.5 !wizard_robe'],`[BLUE][1] tailors a custom fitting robe for [1:themself]<br>With the help of [1:their] magic dust, the new robe begins to flutter with power.`,p=>{p[1].gain('wizard robe');p[1].lose('magic dust');p[1].lose('roll of fabric');});
+
+			// Crafting (T.O.W.O.T.)
+
+			new G.act(itemCraftMult*0.03,['scrap_metal scrappy%0.2|artist%0.2|any%0.5 !frying_pan|peaceful%0.5|inventor%0.5'],`[BLUE][1] makes a frying pan out of [1:their] scrap metal.<br>Could be useful if [1:they] had something to cook with it...`,p=>{p[1].gain('pitchfork');p[1].lose('scrap metal');});
+
 			//topaz
 			new G.act(itemCraftMult*0.75,['topaz_with_a_hole inventor%0.5|scrappy%0.2|artist%0.3|any%0.5|the_gift%0.5|goth%0.2|big_stick !topaz_on_a_stick'],`[BLUE][1] remembers [1:their] topaz with a suspiciously shaped hole, and soon realized...<br>[1] got a nearby branch and put the topaz onto one end, which neatly snaps together! In [1:their] [amazement|astonishment], the topaz feels tingly and electric to the touch, now faintly glowing yellow!`,p=>{ p[1].lose('topaz with a hole'); p[1].gain('topaz on a stick'); });
 			//cooking
@@ -2296,6 +2316,11 @@ G={
 			new G.act(0.025,['random_orb !sword'],`[BLUE][1] pretends to draw one of the items appearing on the surface of [1:their] orb.<br>To [1:their] surprise, they draw a sword out from the orb as it fades away.`,p=>{p[1].gain('sword');p[1].lose('random orb');});
 			new G.act(0.025,['random_orb !axe'],`[BLUE][1] shakes their random item orb. It turns into an axe, upping [1:their] chances of survival somewhat.`,p=>{p[1].gain('axe');p[1].lose('random orb');});
 			new G.act(0.025,['random_orb !cursed_knife'],`[RED][1] ponders [1:their] orb, as it begins to glow a dark red...<br>The orb hatches like an egg, leaving an eerie knife.`,p=>{p[1].gain('cursed knife');p[1].lose('random orb');});
+
+			// Melee (T.O.W.O.T.)
+
+			new G.act(0.025,['random_orb !frying_pan'],`[BLUE][1] tosses [1:their] random item orb around, but it suddenly turns into a frying pan and hits them on the head.<br>Don't worry, the concusion is only minor.`,p=>{p[1].gain('frying pan');p[1].lose('random orb');});
+
 			// - Ranged
 			new G.act(0.03125,['random_orb !slingshot'],`[BLUE][1] watches [1:their] orb slowly turn into an item.<br>Hey, listen! It's just a slingshot now.`,p=>{p[1].gain('slingshot');p[1].lose('random orb');});
 			new G.act(0.03125,['random_orb !slingshot'],`[BLUE][1] nearly trips and drops [1:their] random item orb.<br>As it lands, it shatters into a myriad throwing knives and shuriken.`,p=>{p[1].gain('shuriken');p[1].lose('random orb');});
@@ -2357,6 +2382,11 @@ G={
 			new G.act(vanillaIceCreamTradingChanceMult*0.07,['vanilla_ice_cream any !pitchfork', 'pitchfork !vanilla_ice_cream'],vanillaIceCreamTradingText+'[2:their] pointy pitchfork for it. [1] [gratefully |happily |delightfully |]accepts, and they go on their separate ways without a problem.',p=>{p[1].give(p[2],'vanilla ice cream'); p[2].give(p[1], 'pitchfork');});
             new G.act(vanillaIceCreamTradingChanceMult*0.04,['vanilla_ice_cream any !sword', 'sword !vanilla_ice_cream'],vanillaIceCreamTradingText+'[2:their] sharp, gleaming sword for it. [1] [gratefully |happily |delightfully |]accepts, and they go on their separate ways without a problem.',p=>{p[1].give(p[2],'vanilla ice cream'); p[2].give(p[1], 'sword');});
 			new G.act(vanillaIceCreamTradingChanceMult*0.04,['vanilla_ice_cream any !axe', 'axe !vanilla_ice_cream'],vanillaIceCreamTradingText+'[2:their] [light hand-held axe|heavy greataxe] for it. [1] [gratefully |happily |delightfully |]accepts, and they go on their separate ways without a problem.',p=>{p[1].give(p[2],'vanilla ice cream'); p[2].give(p[1], 'axe');});
+
+			// Melee (T.O.W.O.T.)
+
+			new G.act(vanillaIceCreamTradingChanceMult*0.07,['vanilla_ice_cream any !frying_pan', 'frying_pan !vanilla_ice_cream'],vanillaIceCreamTradingText+'[2:their] useful frying pan for it. [1] [gratefully |happily |delightfully |]accepts, and they go on their separate ways without a problem.',p=>{p[1].give(p[2],'vanilla ice cream'); p[2].give(p[1], 'frying pan');});
+
 			// - Ranged
 			new G.act(vanillaIceCreamTradingChanceMult*0.07,['vanilla_ice_cream any !bow', 'bow !vanilla_ice_cream'],vanillaIceCreamTradingText+'[2:their] [masterfully|intricately] crafted bow for it. [1] [gratefully |happily |delightfully |]accepts, and they go on their separate ways without a problem.',p=>{p[1].give(p[2],'vanilla ice cream'); p[2].give(p[1], 'bow');});
 			new G.act(vanillaIceCreamTradingChanceMult*0.07,['vanilla_ice_cream any !grenade', 'grenade !vanilla_ice_cream'],vanillaIceCreamTradingText+'[2:their] powerful grenade for it. [1] [gratefully |happily |delightfully |]accepts, and they go on their separate ways without a problem.',p=>{p[1].give(p[2],'vanilla ice cream'); p[2].give(p[1], 'grenade');});
@@ -2399,6 +2429,11 @@ G={
 			new G.act(baseItemLoss*0.02,['sword clumsy%0.5|naive%0.2|any%0.5 !scrappy%0.5|ninja%0.5|survivalist%0.2|lucky_coin%0.2'],`[RED][1]'s sword got stuck in a [tree|stone] and [1:they] couldn't get it out.`,p=>{p[1].lose('sword');});
 			new G.act(baseItemLoss*0.02,['axe clumsy%0.5|naive%0.2|any%0.5 !scrappy%0.5|survivalist%0.2|lucky_coin%0.2'],`[RED][1]'s axe was smashed into a bunch of pieces when [1] tried to chop a tree with it.`,p=>{p[1].lose('axe');});
 			new G.act(baseItemLoss*0.02,['cursed_knife wish_ring%0.8|lucky_coin%0.5|peaceful%0.2|stubborn%0.2|any%0.2 !goth%0.8|sociopath%0.8|ninja%0.5|scrappy%0.5'],`[1] wishes they could just be done with their cursed knife once and for all.<br>By their wish or some twist of fate, the knife is gone when [1:they] next sleeps.`,p=>{p[1].lose('cursed knife');});
+
+			// Melee (T.O.W.O.T.)
+
+			new G.act(baseItemLoss*0.02,['frying_pan clumsy%0.5|naive%0.2|any%0.5 !scrappy%0.5|survivalist%0.2|lucky_coin%0.2'],`[RED][1] drops [1:their] frying pan whilst in the middle of cooking some [breakfast|lunch|dinner] and it breaks on impact with the ground.`,p=>{p[1].lose('frying pan');});
+
 			// - Ranged
 			new G.act(baseItemLoss*0.03,['slingshot clumsy%0.5|naive%0.2|bulky%0.2|any%0.5 !scrappy%0.5|annoying%0.2|survivalist%0.2'],`[RED][1] pulled [1:their] slingshot too hard, and it [snapped|shattered] into [4|5|6|8|a thousand] pieces.`,p=>{p[1].lose('slingshot');});
 			new G.act(baseItemLoss*0.02,['shuriken clumsy%0.5|naive%0.2|any%0.5 !scrappy%0.5|ninja%0.5|survivalist%0.2|bulky%0.2'],`[RED][1] threw all of [1:their] shuriken at a tree for practice.<br>Despite trying as hard as possible, they [1:they] couldn't pull them out.`,p=>{p[1].lose('shuriken');});
@@ -2556,13 +2591,14 @@ G={
 				new G.act(perkAttackMult*attackKill*0.1,['frenzied any bleeding_out%0.5|burnt%0.5|badly_poisoned%0.5|missing_arm%0.5|missing_leg%0.5|cut_up%0.3|broken%0.3|shot%0.3|singed%0.3|poisoned%0.3|scratched%0.2|bruised%0.2|meek%0.2 !bulky%0.2|stubborn%0.2'],`[RED][Panting like a wild beast, [1:their] eyes bulging out|After rampaging for a while|Raging fury grasping [1:their] chest], [1]'s frenzy grows so overpowering that [1:their] heart gives out...`,p=>{p[1].die(`frenzy heart attack`);});
             // Evil laugh Combat - suggested by Berwalch -TW
             new G.act(perkAttackMult*attackKill*0.2,[coldBloodKiller+' laughed','- any '+victimKill],`[RED][1] slaughters [2] while laughing quite [evily|maniacally|devilously]!`,p=>{p[1].kill(p[2],`murder`);});
-                new G.act(perkAttackMult*attackKill*0.1,[coldBloodKiller+' laughed big_stick|pitchfork','- any '+victimKill],`[RED][1] clubs [2] to death while laughing quite [evily|maniacally|devilously]!`,p=>{p[1].kill(p[2],`murder`);});
+                new G.act(perkAttackMult*attackKill*0.1,[coldBloodKiller+' laughed big_stick|pitchfork|frying_pan','- any '+victimKill],`[RED][1] clubs [2] to death while laughing quite [evily|maniacally|devilously]!`,p=>{p[1].kill(p[2],`murder`);});
                 new G.act(perkAttackMult*attackKill*0.1,[coldBloodKiller+' laughed sword|axe','- any '+victimKill],`[RED][1] chops [2] to bits while laughing quite [evily|maniacally|devilously]!`,p=>{p[1].kill(p[2],`murder`);});
                 new G.act(perkAttackMult*attackKill*0.1,[coldBloodKiller+' laughed bow|handgun|shotgun|lasergun','- any '+victimKill],`[RED][1] shoots [2] multiple times while laughing quite [evily|maniacally|devilously]!`,p=>{p[1].kill(p[2],`murder`);});
                 new G.act(perkAttackMult*attackKill*0.1,[coldBloodKiller+' laughed grenade|rocket_launcher','- any '+victimKill],`[RED][1] blows up [2], when the smoke clears, [1] is laughing [evily|maniacally|devilously|excessively]!`,p=>{p[1].kill(p[2],`explosion`);p[1].lose('grenade');});
                 new G.act(perkAttackMult*attackKill*0.1,[coldBloodKiller+' laughed grenade|rocket_launcher','- any '+victimKill],`[RED][1] blows up [2] and [3] when they're talking together!<br>When the smoke clears, [1] is laughing [evily|maniacally|devilously|excessively]!`,p=>{p[1].kill(p[2],`explosion`);p[1].kill(p[3],`explosion`);p[1].lose('grenade');});
                 new G.act(perkAttackMult*attackKill*0.1,[coldBloodKiller+' laughed flamethrower|magic_wand|ancient_scepter','- any '+victimKill],`[RED][1] sets [2] aflame and laughs very [evily|maniacally|devilously|excessively] as they burn!`,p=>{p[1].kill(p[2],`incinerated`);});
                 new G.act(perkAttackMult*attackKill*0.2,[coldBloodKiller+' laughed cursed_knife','- any '+victimKill],`[RED][1] just keeps stabbing [2] even after they'ved died, all the while laughing quite [evily|maniacally|devilously|deranged]!`,p=>{p[1].kill(p[2],`cursed_knife`);});
+			
 			// Freezing sapphire combat -CS
 			new G.act(perkAttackMult*attackKill*0.5,[coldBloodKiller+' freezing_sapphire','- any '+victimKill],`[RED][1] creeps up behind [2] and throw [1:their] freezing sapphire, turning [2:them] into a solid block of ice - before promptly [throwing [2:them] down a [cliff|lake]|smashing it into pieces|burying it into the ground]`,p=>{p[1].kill(p[2], 'freezing sapphire');p[1].lose('freezing sapphire');});
 				new G.act(perkAttackMult*attackKill*0.3,[coldBloodKiller+' freezing_sapphire devious|sociopath','- any '+victimKill],`[RED][1] creeps up behind [2] and quickly tackles [2:them] to the ground, before promptly shoving [1:their] freezing sapphire down [2:their] throat!`,p=>{ p[1].kill(p[2], 'glacial stasis'); p[1].lose('freezing sapphire'); });
@@ -2703,6 +2739,14 @@ G={
 				new G.act(perkAttackMult*attackKill*0.3,[hesitentKiller+' pet_tiger animal_ken%0.8|meek%0.2|cowardly%0.2|rich%0.2|any%0.5','- any !animal_ken%0.5|kind%0.2|rich%0.2 '+victimKill],`[RED][1] sics [1:their] pet tiger on [2]!<br>[2] gets mauled to laces by the ravenous animal!`,p=>{p[1].kill(p[2],`pet tiger`);});
 				new G.act(perkAttackMult*attackKill*0.2,[hesitentKiller+' pet_tiger animal_ken%0.8|meek%0.2|cowardly%0.2|rich%0.2|any%0.5','- any !animal_ken%0.5|kind%0.2|rich%0.2 '+victimKill,'+ any !animal_ken%0.5|kind%0.2|rich%0.2 '+victimKill],`[RED][1] ambushes [2] and [3] with [1:their] tiger!<br>[2] and [3] never had a chance against the [apex|deadly|massive] [predator|carnivore|striped feline|beast].`,p=>{p[1].kill(p[2],`pet tiger`);p[1].kill(p[3],`pet tiger`);});
 				new G.act(perkAttackMult*attackFail*0.3,[hesitentKiller+' pet_tiger !animal_ken%0.5|sociopath%0.5|survivalist%0.2|rich%0.2','- any animal_ken%0.8|peaceful%0.2|kind%0.2|rich%0.2 !meek%0.2|naive%0.2|cowardly%0.2'],`[1] sics [1:their] pet tiger on [2]!<br>[2] [never breaks eye contact with|never turns [2:their] back to|avoids getting caught by] the [apex|deadly|massive] [predator|carnivore|striped feline|beast] until the tiger finally loses interest and leaves.`);
+
+			// (T.O.W.O.T.)
+			// Frying Pan Combat
+
+			new G.act(perkAttackMult*attackMinor*0.3,[hesitentKiller+' frying_pan bulky|any%0.8','- any !knight_armor%0.2|kite_shield%0.2 '+victimMinor],`[RED][1] wacked [2] with [1:their] frying pan, leaving a nasty bruise.`,p=>{p[2].gain('bruised');});
+			new G.act(perkAttackMult*attackModerate*0.3,[hesitentKiller+' frying_pan bulky|any%0.8','- any !knight_armor%0.2|kite_shield%0.2 '+victimModerate],`[RED][1] hits [2] pretty hard in the head with [1:their] stick, leaving [2:them] feeling pretty dizzy.`,p=>{p[2].gain('dizzy');});
+				new G.act(perkAttackMult*attackKill*0.2,[coldBloodKiller+' frying_pan bulky|any%0.8','- any !knight_armor%0.2|kite_shield%0.2 '+victimKill],`[RED][1] smashed [2] in the head with all [1:their] might with [1:their] their frying pan, knocking [2:them] unconscious!`,p=>{p[2].gain('unconscious');});
+				new G.act(perkAttackMult*attackKill*0.2,[coldBloodKiller+' frying_pan bulky|any%0.8','- any !knight_armor%0.2|kite_shield%0.2 '+victimKill],`[RED][1] beats [2] over and over again with [1:their] frying pan, killing them!`,p=>{p[1].kill(p[2],`frying pan`);});
 			
 			// Injury Events
 			var healthMinor='bulky%0.3|stubborn%0.3|plot_armor%0.2|any%0.5 !scratched%0.2|bruised%0.2|sick%0.2|dizzy%0.2';
@@ -4699,11 +4743,11 @@ G={
 						cl[1].gain('bruised');
 					}
 					if (Math.random() < chance) {
-						if (cl[1].has('knight armor') && Math.random() < chance) { cl[1].lose('knight armor'); return text.replace('[S]', ' breaking [2:their] knight armor in the process!'); }
-						cl[1].gain('bruised'); cl[1].gain('fallen'); return text.replace('[S]', ' and [knocking|catapulting] [2:them] onto the [ground|floor]');
+						if (cl[1].has('knight armor') && Math.random() < chance) { cl[1].lose('knight armor'); return text.replace('[S]', ', breaking [2:their] knight armor in the process!'); }
+						cl[1].gain('bruised'); cl[1].gain('fallen'); return text.replace('[S]', ' and [knocking|catapulting] [2:them] onto the [ground|floor].');
 					}
 				},
-				pReq: ['p:15']
+				pReq: ['e:15']
 			});
 			new G.move({
 				chance: 4,
@@ -5478,7 +5522,9 @@ G={
 				['hot chocolate', 2],
 				['mint essence', 2],
 				['extreme cinnamon soda', 2],
-				['random orb', 3]
+				['random orb', 3],
+
+				['frying pan', 1]
 			]
 			new G.move({
 				chance: 5.5,
@@ -7075,6 +7121,28 @@ G={
 					this.lose('snake climbing');
 				},
 				req: ['snake_charmer\'s_flute snake_climbing any%0.5 !injured%0.2|ailed%0.2|bruised%0.2|cut_up%0.2|singed%0.2|crippled%0.3|seared%0.3|lacerated%0.3|poisoned%0.3 '+hardDisables]
+			});
+
+			// (T.O.W.O.T.)
+			// Frying Pan - 1 Move
+			
+			new G.move({
+				chance: 2,
+				text: '[1] [T] with [1:their] frying pan[S].',
+				failText: '[1] tries [wacking|hitting] [2] with [1:their] frying pan, but misses [1:their] mark.',
+				fail: function(cl) { return cl[1].adjust(this.adjust(0.2, 'swing'), 'dodge'); },
+				req: ['big_stick'],
+				func: function(cl) {
+					this.combat.moveInFrontOf(cl[1], Math.floor(Math.random() * 5 + 2));
+				},
+				successFunc: function(cl, text) {
+					if (Math.random() < 0.4) {
+						return G.moveAssets.hardBodyHit().call(this, cl, text.replace('[T]', 'lands a [powerful|hard-hitting] blow on [2]\'s head'));
+					} else {
+						return G.moveAssets.hardHeadHit().call(this, cl, text.replace('[T]', '[wacks|hits] [2] on the head'));
+					}
+				},
+				pReq: ['e:5']
 			});
 			
 			G.parse = function(text,actors)
