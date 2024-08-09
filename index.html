@@ -1223,7 +1223,7 @@ G={
 				
 				var n=0;
 
-				soulTraitsStr+=`${perkSelector('soulTrait',char.l.id+'-perk-'+n,soulTraits[i])} `;
+				soulTraitsStr+=`${perkSelector('soulTrait',char.l.id+'-perk-'+n,soulTraits[0])} `;
 				n++;
 				for (var i=0;i<traits.length;i++)
 				{
@@ -1323,13 +1323,13 @@ G={
 						<div style="text-align:center;">
 							<e style="float:left;margin-right:8px;">${me.name}</e>
 							<br>
-							<div style="min-width:32%;display:inline-block;"><cap>Soul Trait :</cap> ${me.perks.map(perk=>(perk.perk.type=='soulTrait')?('<div class="bit" title="'+perk.desc+'">'+perk.perk.name+'</div>'):'').join(' ')}</div>
+							<div style="min-width:32%;display:inline-block;"><cap>Soul Trait :</cap> ${me.perks.map(perk=>(perk.perk.type=='soulTrait')?('<div class="bit" title="'+perk.perk.desc+'">'+perk.perk.name+'</div>'):'').join(' ')}</div>
 							<br>
-							<div style="min-width:32%;display:inline-block;"><cap>Perks :</cap> ${me.perks.map(perk=>(perk.perk.type=='trait' && perk.perk.name!='no perk')?('<div class="bit" title="'+perk.desc+'">'+perk.perk.name+'</div>'):'').join(' ')}</div>
+							<div style="min-width:32%;display:inline-block;"><cap>Perks :</cap> ${me.perks.map(perk=>(perk.perk.type=='trait' && perk.perk.name!='no perk')?('<div class="bit" title="'+perk.perk.desc+'">'+perk.perk.name+'</div>'):'').join(' ')}</div>
 							<br>
-							<div style="min-width:32%;display:inline-block;"><cap>Items :</cap> ${me.perks.map(perk=>(perk.perk.type=='item' && perk.perk.name!='no item')?('<div class="bit" title="'+perk.desc+'">'+perk.perk.name+'</div>'):'').join(' ')}</div>
+							<div style="min-width:32%;display:inline-block;"><cap>Items :</cap> ${me.perks.map(perk=>(perk.perk.type=='item' && perk.perk.name!='no item')?('<div class="bit" title="'+perk.perk.desc+'">'+perk.perk.name+'</div>'):'').join(' ')}</div>
 							<br>
-							<div style="min-width:32%;display:inline-block;"><cap>Other :</cap> ${me.perks.map(perk=>(perk.perk.type!='item' && perk.perk.type!='trait' && perk.perk.type!='soulTrait')?('<div class="bit" title="'+perk.desc+'">'+perk.perk.name+'</div>'):'').join(' ')}</div>
+							<div style="min-width:32%;display:inline-block;"><cap>Other :</cap> ${me.perks.map(perk=>(perk.perk.type!='item' && perk.perk.type!='trait' && perk.perk.type!='soulTrait')?('<div class="bit" title="'+perk.perk.desc+'">'+perk.perk.name+'</div>'):'').join(' ')}</div>
 						</div>
 						${me.kills.length>0?('<div style="color:#e2461f;">Killed '+me.kills.length+' (<e>'+me.kills.map(char=>char.name).join(', ')+'</e>)</div>'):''}
 						${(me.killer.length>0 && me.has('dead'))?('<div style="color:#e2461f;">Dead, killed by <e>'+me.killer.map(char=>char.name).join(', ')+'</e> ('+me.deathReason+')</div>'):''}
