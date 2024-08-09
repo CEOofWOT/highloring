@@ -1223,11 +1223,8 @@ G={
 				
 				var n=0;
 
-				for (var i=0;i<traits.length;i++)
-				{
-					soulTraitsStr+=`${perkSelector('soulTrait',char.l.id+'-perk-'+n,soulTraits[i])} `;
-					n++;
-				}
+				soulTraitsStr+=`${perkSelector('soulTrait',char.l.id+'-perk-'+n,soulTraits[i])} `;
+				n++;
 				for (var i=0;i<traits.length;i++)
 				{
 					traitsStr+=`${perkSelector('trait',char.l.id+'-perk-'+n,traits[i])} `;
@@ -1248,7 +1245,11 @@ G={
 					<select id="${char.l.id+'-tier'}"><option title="Character acts every round." value="0"${char.tier==0?' selected="selected"':''}>main</option><option title="Character only acts every now and then." value="1"${char.tier==1?' selected="selected"':''}>minor</option></select> 
 					Pic URL : <input type="text" size="24" id="${char.l.id+'-picUrl'}" value="${char.pic}"/> 
 					<br>
-					Perks : ${traitsStr} Item : ${itemsStr} Soul Trait : ${soulTraitsStr} 
+					Perks : ${traitsStr}
+					<br>
+					Items : ${itemsStr}
+					<br>
+					Soul Trait : ${soulTraitsStr} 
 				`;
 				addEvent(l(char.l.id+'-delete'),'click',function(){
 					team.members.splice(team.members.indexOf(char),1);
