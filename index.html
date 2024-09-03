@@ -574,7 +574,6 @@ G={
 			this.owner = owner; 
 			this.roundN = 0;
 			this.t = 0;
-			console.log(this)
 			if (obj) { for (let i in obj) { this[i] = obj[i]; } }
 			if (this.perk.combat) { this.mt = 0; }
 			if (this.perk.init) { for (let i in this.perk.init) { this[i] = deepArrCopy(this.perk.init[i]); } }
@@ -601,7 +600,7 @@ G={
 		G.glob={type:'soulTrait',def:true}
 			G.glob.subPerks = []
 		new G.perk({name:`soulless`,desc:`Is unable to feel love, joy or compassion.`,subPerks:['sociopath','unstable','devious'], update: function() { for (let i of ['peaceful','kind']) { if (this.owner.has(i)) { this.owner.lose(i, true); } } }})
-		new G.perk({name:`monster soul`,desc:`Are mostly made of magic. Weaker than humans.`,subPerks:['meek','artistic']})
+		new G.perk({name:`monster soul`,desc:`Are mostly made of magic. Weaker than humans.`,subPerks:['meek','artist']})
 		new G.perk({name:`determination`,desc:`Try as they might, they continue to be themself.`,subPerks:[`leader`,`stubborn`,`determined`], init: { revives: 1 }, onDeath: function() { if (this.revives) { this.owner.gain('refused') }; this.revives--; } })
 		new G.perk({name:`bravery`,desc:`Rushes fist-first through all of their obstacles.`,subPerks:[`bulky`,`stubborn`,`haste`]})
 		new G.perk({name:`justice`,desc:`Puts an end to their opponent with their sure-fire accuracy.`,subPerks:[`marksman`,`stubborn`,`vigilant`]})
@@ -918,6 +917,30 @@ G={
 				}
 				else return o;
 			}
+			G.exportCharSetup=function(char)
+			{
+				var perks=[];
+				var perkN=0;
+				while (l(char.l.id+'-perk-'+perkN))
+				{
+					var el=l(char.l.id+'-perk-'+perkN);
+					var perk=G.perks[el.options[el.selectedIndex].value];
+					if (perk.name!='no perk' && perk.name!='no item' && (perk.type!='trait' || perks.indexOf(perk.name)==-1)) perks.push(perk.name);
+					perkN++;
+				}
+
+				var o={name:char.name,g:char.gender,t:char.tier,pic:char.pic,perks:perks}
+				
+				var str=`
+					<header>Exporting character setup</header>
+					<div>Copy this text. You can later import your character setup by pasting this back in a character import menu.</div>
+					<textarea id="textareaPrompt" style="width:100%;height:128px;" readonly>${JSON.stringify(o)}</textarea>
+				`;
+				G.popup(str,function(){
+					l('textareaPrompt').focus();
+					l('textareaPrompt').select();
+				});
+			}
 			G.importSetup=function(str)
 			{
 				//meant to be called from creator screen only
@@ -972,9 +995,42 @@ G={
 					var hasTeamless=false;
 					for (var i in teams){if (teams[i].name=='NOTEAM') hasTeamless=true;}
 					if (!hasTeamless) addTeam({name:'NOTEAM',chars:[]});
+					console.log(teams)
 					for (var i in teams){addTeam(teams[i]);}
 					for (var i in G.teams){refreshTeam(G.teams[i]);}
 					return true;
+				}
+			}
+			G.importCharSetup=function(team, char, str)
+			{
+				if (!str)
+				{
+					var str=`
+						<header>Importing character setup</header>
+						<div style="overflow:hidden;"><div id="importDesc">Paste in the text you were given on character setup export.</div></div>
+						<textarea id="textareaPrompt" style="width:100%;height:128px;"></textarea>
+					`;
+					G.popup(str,function(){
+						l('textareaPrompt').focus();
+						l('closePopup').innerHTML='Cancel';
+						l('closePopup').insertAdjacentHTML('beforebegin','<div id="confirmPopup" class="button bigButton">Load</div>');
+						addEvent(l('confirmPopup'),'click',function(){
+							var str=l('textareaPrompt').value;
+							if ((str.length>0) && G.importCharSetup(team, char, str)) G.closePopup();
+							else {l('importDesc').innerHTML=`<span style="color:#e2461f;">Looks like that's not a valid character setup string, sorry!</span>`;triggerAnim(l('importDesc'),'pucker');}
+						});
+					});
+				}
+				else
+				{
+					var o={}
+					try{o=JSON.parse(str);}catch(e){o=0;}
+					if (!o) return false
+
+					o={name:STRCLN(o.name),gender:INTCLN(o.g),tier:INTCLN(o.t||0),pic:STRCLN(o.pic),perks:o.perks,l:char.l,id:char.id}
+
+					addChar(team, o)
+					return true
 				}
 			}
 			l('main').innerHTML=`
@@ -1159,10 +1215,11 @@ G={
 					if (freeNames.length==0) freeNames.push('Nobody');
 					name=c(freeNames);
 				}
+				if (o.domN) domN=o.id
 				
 				let char={team:team,name:name,pic:o.pic||'defPic.jpg',gender:gender,tier:tier,perks:[],l:0,id:domN};
-				l(team.l.id+'-members').insertAdjacentHTML('beforeend','<div class="char hasHandle" id="dom'+domN+'"></div>');
-				char.l=l('dom'+domN);
+				if (!o.id) l(team.l.id+'-members').insertAdjacentHTML('beforeend','<div class="char hasHandle" id="dom'+domN+'"></div>');
+				char.l=(typeof o.l !== 'undefined')?o.l:l('dom'+domN);
 				
 				var soulTraitsStr=''
 				var traitsStr='';
@@ -1249,7 +1306,7 @@ G={
 					<div class="handle"></div>
 					<div class="picBox"><img src="${char.pic||'defPic.jpg'}" id="${char.l.id+'-pic'}" class="pic"/></div>
 					Name : <input type="text" size="14" id="${char.l.id+'-name'}" value="${char.name}"/> 
-					<select id="${char.l.id+'-gender'}"><option value="0"${char.gender==0?' selected="selected"':''}>he</option><option value="1"${char.gender==1?' selected="selected"':''}>she</option><option value="2"${char.gender==2?' selected="selected"':''}>they</option><option value="3"${char.gender==3?' selected="selected"':''}>it</option></select> 
+					<select id="${char.l.id+'-gender'}"><option value="0"${char.gender==0?' selected="selected"':''}>he</option><option value="1"${char.gender==1?' selected="selected"':''}>she</option><option value="2"${char.gender==2?' selected="selected"':''}>they</option><option value="3"${char.gender==3?' selected="selected"':''}>it</option><option value="-1"${char.gender==-1?' selected="selected"':''}>any</option></select> 
 					<select id="${char.l.id+'-tier'}"><option title="Character acts every round." value="0"${char.tier==0?' selected="selected"':''}>main</option><option title="Character only acts every now and then." value="1"${char.tier==1?' selected="selected"':''}>minor</option></select> 
 					Pic URL : <input type="text" size="24" id="${char.l.id+'-picUrl'}" value="${char.pic}"/>
 					<br>
@@ -1258,6 +1315,8 @@ G={
 					Perks : ${traitsStr}
 					<br>
 					Items : ${itemsStr}
+					<br>
+					<div style="text-align:left;overflow:hidden;"><div class="button" id="${char.l.id+'-importCharSetup'}">Import an existing character setup...</div> <div class="button" id="${char.l.id+'-exportCharSetup'}">Export this character setup...</div>
 				`;
 				addEvent(l(char.l.id+'-delete'),'click',function(){
 					team.members.splice(team.members.indexOf(char),1);
@@ -1270,11 +1329,17 @@ G={
 					l(char.l.id+'-pic').src=val;
 					char.pic=val;
 				});
+				addEvent(l(char.l.id+'-importCharSetup'),'click',function(){ G.importCharSetup(team, char); });
+				addEvent(l(char.l.id+'-exportCharSetup'),'click',function(){ G.exportCharSetup(char); });
 				//addEvent(l(char.l.id+'-pic'),'dragstart',function(e){e.preventDefault();});
 				
 				domN++;
-				team.members.push(char);
-				animAdd(char.l);
+				if (!o.l) {
+					team.members.push(char);
+					animAdd(char.l);
+				} else {
+					team.members[team.members.indexOf(team.members.find((member) => member.l == char.l))] = char
+				}
 				refreshTeam(team);
 				return char;
 			}
@@ -7392,18 +7457,22 @@ G={
 								if (!isNaN(bits[0]) && actors[parseInt(bits[0])-1])
 								{
 									var actor=actors[parseInt(bits[0])-1];
+									var gender=actor.gender
+									if (gender==-1) {
+										gender=Math.floor(Math.random()*4)
+									}
 									if (prop=='g')
 									{
-										out+=G.parse([bits[1],bits[2],bits[3],bits[4]][actor.gender].replaceAll('{PIPE}','|').replaceAll('{COLON}',':'),actors);
+										out+=G.parse([bits[1],bits[2],bits[3],bits[4]][gender].replaceAll('{PIPE}','|').replaceAll('{COLON}',':'),actors);
 									}
-									else if (prop=='they') {out+=['he','she','they','it'][actor.gender];}
-									else if (prop=='They') {out+=['He','She','They','It'][actor.gender];}
-									else if (prop=='them') {out+=['him','her','them','it'][actor.gender];}
-									else if (prop=='Them') {out+=['Him','Her','Them','It'][actor.gender];}
-									else if (prop=='their') {out+=['his','her','their','its'][actor.gender];}
-									else if (prop=='Their') {out+=['His','Her','Their','Its'][actor.gender];}
-									else if (prop=='themself' || prop=='themselves') {out+=['himself','herself','themself','itself'][actor.gender];}
-									else if (prop=='Themself' || prop=='Themselves') {out+=['Himself','Herself','Themself','Itself'][actor.gender];}
+									else if (prop=='they') {out+=['he','she','they','it'][gender];}
+									else if (prop=='They') {out+=['He','She','They','It'][gender];}
+									else if (prop=='them') {out+=['him','her','them','it'][gender];}
+									else if (prop=='Them') {out+=['Him','Her','Them','It'][gender];}
+									else if (prop=='their') {out+=['his','her','their','its'][gender];}
+									else if (prop=='Their') {out+=['His','Her','Their','Its'][gender];}
+									else if (prop=='themself' || prop=='themselves') {out+=['himself','herself','themself','itself'][gender];}
+									else if (prop=='Themself' || prop=='Themselves') {out+=['Himself','Herself','Themself','Itself'][gender];}
 									else out+='<e>'+actor.name+'</e>';
 								}
 								else out+='<e>[invalid actor : '+bits[0]+']</e>';
