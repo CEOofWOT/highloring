@@ -995,7 +995,6 @@ G={
 					var hasTeamless=false;
 					for (var i in teams){if (teams[i].name=='NOTEAM') hasTeamless=true;}
 					if (!hasTeamless) addTeam({name:'NOTEAM',chars:[]});
-					console.log(teams)
 					for (var i in teams){addTeam(teams[i]);}
 					for (var i in G.teams){refreshTeam(G.teams[i]);}
 					return true;
@@ -1322,6 +1321,9 @@ G={
 					team.members.splice(team.members.indexOf(char),1);
 					animRemove(char.l);
 					refreshTeam(team);
+				});
+				addEvent(l(char.l.id+'-name'),'input',function(){
+					char.name=l(char.l.id+'-name').value;
 				});
 				addEvent(l(char.l.id+'-picUrl'),'input',function(){
 					var val=l(char.l.id+'-picUrl').value;
