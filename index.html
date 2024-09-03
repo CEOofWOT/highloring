@@ -577,6 +577,7 @@ G={
 			if (obj) { for (let i in obj) { this[i] = obj[i]; } }
 			if (this.perk.combat) { this.mt = 0; }
 			if (this.perk.init) { for (let i in this.perk.init) { this[i] = deepArrCopy(this.perk.init[i]); } }
+			if (this.perk.type=='soulTrait') { this.subPerks = this.perk.subPerks.map((subPerk) => new G.perkToken(G.perksBN[subPerk], this.owner)) }
 		}
 
 		/*
@@ -594,18 +595,19 @@ G={
 		"countFunc": function, uses its return value for the amount of disabled, injured, or ailed that it counts for (default 1 if it isnt defined, *5 for any hard disables); a type argument is passed into it (string) between "disable", "injury", "ailment", and "out" indicating which function is calling it
   		*/
 
-		// Soul Traits (T.O.W.O.T.)
+		// Soul Traits - T.O.W.O.T.
 		
 		G.glob={type:'soulTrait',def:true}
-		new G.perk({name:`soulless`,desc:``})
-		new G.perk({name:`monster soul`,desc:``})
-		new G.perk({name:`determination`,desc:``})
-		new G.perk({name:`bravery`,desc:``})
-		new G.perk({name:`justice`,desc:``})
-		new G.perk({name:`kindness`,desc:``})
-		new G.perk({name:`patience`,desc:``})
-		new G.perk({name:`integrity`,desc:``})
-		new G.perk({name:`perserverance`,desc:``})
+			G.glob.subPerks = []
+		new G.perk({name:`soulless`,desc:`Is unable to feel love, joy or compassion.`,subPerks:['sociopath','unstable','devious'], update: function() { for (let i of ['peaceful','kind']) { if (this.owner.has(i)) { this.owner.lose(i, true); } } }})
+		new G.perk({name:`monster soul`,desc:`Are mostly made of magic. Weaker than humans.`,subPerks:['meek','artistic']})
+		new G.perk({name:`determination`,desc:`Try as they might, they continue to be themself.`,subPerks:[`leader`,`stubborn`,`determined`], init: { revives: 1 }, onDeath: function() { if (this.revives) { this.owner.gain('refused') }; this.revives--; } })
+		new G.perk({name:`bravery`,desc:`Rushes fist-first through all of their obstacles.`,subPerks:[`bulky`,`stubborn`,`haste`]})
+		new G.perk({name:`justice`,desc:`Puts an end to their opponent with their sure-fire accuracy.`,subPerks:[`marksman`,`stubborn`,`vigilant`]})
+		new G.perk({name:`integrity`,desc:`Pulls themself through with their original style.`,subPerks:[`survivalist`,`stubborn`]})
+		new G.perk({name:`kindness`,desc:`Shows concern and care for others.`,subPerks:[`peaceful`,`kind`,`medic`]})
+		new G.perk({name:`perserverance`,desc:`Takes notes in order to best their opponent, even when feeling trapped.`,subPerks:[`analytical`,`glasses`,`nerd`,`vigilant`]})
+		new G.perk({name:`patience`,desc:`Waits for the opportunity... then dethrones their opponent with a sharp attack.`,subPerks:[`analytical`,`haste`]})
 
 		G.glob={type:'trait',def:true};
 		new G.perk({name:`no perk`,desc:`No perk selected.`});
@@ -765,6 +767,11 @@ G={
         //Make sure people stay "gone" -TW
         new G.perk({name:`nihil`,desc:`Has ceased to exist entirely.`,out:true});
         new G.perk({name:`confirmed`,desc:`Has been confirmed to not be mostly dead.`,out:true});
+
+
+		// Additional Flags / Statuses - T.O.W.O.T.
+		new G.perk({name:`refused`,desc:`But it refused.`,disable:false,injury:false})
+
 		
 		G.glob={type:'item'};
 			G.glob.def=true;
@@ -1284,7 +1291,7 @@ G={
 				for (var i in perks)
 				{
 					var me=perks[i];
-					str+=`<option value="${me.id}" title="${me.desc}"${me==selected?' selected="selected"':''}>${me.name}</option>`;
+					str+=`<option value="${me.id}" title="${me.desc}${me.type=='soulTrait'?'\nSubperks: '+me.subPerks.join(', '):''}"${me==selected?' selected="selected"':''}>${me.name}</option>`;
 				}
 				return '<select id="'+id+'">'+str+'</select>';
 			}
@@ -1323,7 +1330,7 @@ G={
 						<div style="text-align:center;">
 							<e style="float:left;margin-right:8px;">${me.name}</e>
 							<br>
-							<div style="min-width:32%;display:inline-block;"><cap>Soul Trait :</cap> ${me.perks.map(perk=>(perk.perk.type=='soulTrait')?('<div class="bit" title="'+perk.perk.desc+'">'+perk.perk.name+'</div>'):'').join(' ')}</div>
+							<div style="min-width:32%;display:inline-block;"><cap>Soul Trait :</cap> ${me.perks.map(perk=>(perk.perk.type=='soulTrait')?('<div class="bit" title="'+perk.perk.desc+'\nSubperks: '+perk.subPerks.map(subPerk=>subPerk.perk.name).join(', ')+'">'+perk.perk.name+'</div>'):'').join(' ')}</div>
 							<br>
 							<div style="min-width:32%;display:inline-block;"><cap>Perks :</cap> ${me.perks.map(perk=>(perk.perk.type=='trait' && perk.perk.name!='no perk')?('<div class="bit" title="'+perk.perk.desc+'">'+perk.perk.name+'</div>'):'').join(' ')}</div>
 							<br>
@@ -1415,22 +1422,30 @@ G={
 			G.charsBN = {}; //Do not use for code, just convenient for testing
 				G.char.prototype.has=function(perk) {
 					if (typeof perk==='string') {
-						if (!G.perksBN[perk]) {console.log('No perk named','"'+perk+'"');return false;}
+						if (!G.perksBN[perk]) { console.log('No perk named','"'+perk+'"'); return false; }
 						perk=G.perksBN[perk];
 					}
 					if (perk instanceof G.perkToken) {
 						if (this.perks.includes(perk)) { return this.perks[this.perks.indexOf(perk)]; }
+						for (let soulTrait of this.perks.filter(p=>(p.perk.type=='soulTrait'))) {
+							if (soulTrait.subPerks.includes(perk)) { return soulTrait.subPerks[soulTrait.subPerks.indexOf(perk)]; }
+						}
 						return false;
 					}
 					for (let i in this.perks) {
 						if (this.perks[i].perk.name==perk.name) return this.perks[i];
+					}
+					for (let soulTrait of this.perks.filter(p=>(p.perk.type=='soulTrait'))) {
+						for (let i in soulTrait.subPerks) {
+							if (soulTrait.subPerks[i].perk.name==perk.name) return soulTrait.subPerks[i];
+						}
 					}
 					return false;
 				}
 				G.char.prototype.gain=function(perk) {
 					let alreadyHasPerk = false;
 					let token = null;
-					if (this.has(perk)) { 
+					if (this.has(perk) && this.perks.includes(perk)) { 
 						token = this.has(perk); 
 						alreadyHasPerk = true;
 						if (typeof perk==='string') {
@@ -1452,13 +1467,13 @@ G={
 				G.char.prototype.lose=function(perk, force) {
 					let token = null;
 					if (perk instanceof G.perkToken) { token = perk; } else { token = this.has(perk); }
-					if (token) { 
+					if (token && this.perks.includes(token)) { 
 						if (token.perk.onLose) { token.perk.onLose.call(token); }
 						if (!token.perk.cannotLose || force) { return this.perks.splice(this.perks.indexOf(token), 1); }
 					}
 				}
 				G.char.prototype.give=function(other,perk) {
-					if (this.has(perk)) {this.has(perk).owner = other; other.gain(this.has(perk)); this.lose(perk);}
+					if (this.has(perk) && this.perks.includes(perk)) {this.has(perk).owner = other; other.gain(this.has(perk)); this.lose(perk);}
 				}
 				G.char.prototype.die=function(reason) {
 					if (!this.has('dead'))
@@ -1544,6 +1559,7 @@ G={
 				G.adjustFuncs = {
 					overall: function(c) {
 						let pow = 1;
+						
 						if (this.has('bruised')) { pow += 0.1; }
 						if (this.has('clumsy')) { pow += 0.25; }
 						if (this.has('dazed')) { pow += 0.25; }
@@ -1565,6 +1581,10 @@ G={
 						if (this.has('knight armor')) { pow *= 0.8; }
 						if (this.has('kevlar vest')) { pow *= 0.9; }
 						if (this.has('ironskin')) { pow *= 0.7; }
+
+						if (this.has('monster soul')) { pow *= 1.2 }
+						if (this.has('bravery')) { pow *= 0.5 }
+						if (this.has('justice')) { pow *= 0.7 }
 
 						return 1 - Math.pow(1 - c, pow);
 					}
@@ -1620,12 +1640,19 @@ G={
 					{
 						var el=l(member.l.id+'-perk-'+perkN);
 						var perk=G.perks[el.options[el.selectedIndex].value];
-						if (perk.name!='no perk' && perk.name!='no item' && (perk.type!='trait' || perks.indexOf(perk)==-1)) perks.push(new G.perkToken(perk, null));
+						if (perk.name!='no perk' && perk.name!='no item' && (perk.type!='trait' || perks.indexOf(perk)==-1)) { perks.push(new G.perkToken(perk, null)); }
 						perkN++;
 					}
 					var me=new G.char({name:member.name,pic:member.pic,perks:perks,gender:member.gender,tier:member.tier});
 					members.push(me);
-					for (let i of me.perks) { i.owner = me; }
+					for (let i of me.perks) {
+						i.owner = me;
+						if (i.perk.type=='soulTrait') {
+							for (let ii of i.subPerks) {
+								ii.owner = me;
+							}
+						}
+					}
 				}
 				if (!base.teamless) new G.team({name:base.name,chars:members});
 			}
@@ -2963,6 +2990,11 @@ G={
 			
 			new G.act(FORCE,['revived !suicidal !dead every'],`[1] feels [1:themself], unsure what just happened. Guess [1:g|he's|she's|they're|it's] alive again.`,p=>{p[1].lose('sheep');p[1].lose('revived');p[1].lose('confirmed');});
 			new G.act(FORCE,['revived suicidal !dead every'],`[1] feels [1:themself], unsure what just happened. Guess [1:g|he's|she's|they're|it's] alive again.<br>Goddammit.`,p=>{p[1].lose('sheep');p[1].lose('revived');p[1].lose('confirmed');});
+
+
+			// Soul Trait Mechanics - T.O.W.O.T.
+
+			new G.act(FORCE,['dead !nihil refused'],`[1] may have died... but [1:their] soul refused!<br>[1] [comes back to life|is [brought back from the dead|revived]], [1:their] soul reformed and [1:their] body unscathed.`,p=>{p[1].revive();p[1].lose('refused');})
 			
 			/*
 			//just a test
@@ -4004,6 +4036,10 @@ G={
 				if (this.has('haste') || this.has('ninja')) { pow *= 0.95; }
 				if (this.has('invigorated')) { pow *= Math.pow(0.85, this.has('invigorated').power); }
 				if (this.has('frenzied')) { pow *= 0.2; }
+
+				if (this.has('monster soul')) { pow *= 1.2 }
+				if (this.has('bravery')) { pow *= 0.5 }
+				if (this.has('integrity')) { pow *= 0.7 }
 				
 				return 1 - Math.pow(1 - chance, pow);
 			}
@@ -4308,6 +4344,10 @@ G={
 				pow *= Math.pow(0.5, this.isInjured());
 				pow *= Math.pow(0.75, this.isAiled());
 
+				if (this.has('monster soul')) { pow *= 0.8 }
+				if (this.has('bravery')) { pow *= 2 }
+				if (this.has('justice')) { pow *= 1.4 }
+
 				return 1 - Math.pow(1 - chance, pow);
 			};
 			G.adjustFuncs.defenseGen = function(chance) {
@@ -4329,6 +4369,10 @@ G={
 				if (this.has('bulky')) { pow *= 0.9; }
 				if (this.has('defensive')) { pow *= 0.75; }
 				if (this.has('survivalist') || this.has('dapper suit')) { pow *= 0.95; }
+
+				if (this.has('monster soul')) { pow *= 1.2 }
+				if (this.has('bravery')) { pow *= 0.6 }
+				if (this.has('integrity')) { pow *= 0.8 }
 
 				return 1 - Math.pow(1 - chance, pow);
 			}
@@ -4579,6 +4623,9 @@ G={
 				if (this.has('haste')) { pow *= 0.9; }
 				if (this.has('ninja')) { pow *= 0.8; }
 				if (this.has('marksman')) { pow *= 0.8; }
+
+				if (this.has('bravery')) { pow *= 0.5 }
+				if (this.has('justice')) { pow *= 0.7 }
 				
 				return 1 - Math.pow(1 - chance, pow);
 			};
@@ -4603,7 +4650,11 @@ G={
 				if (this.has('bruised')) { pow *= Math.pow(0.9, this.has('bruised').count); }
 				if (this.has('vulnerable')) { pow *= 0.8; }
 				if (this.has('weak')) { pow *= 0.8; }
-				pow *= Math.pow(0.75, this.isDisabled()); 
+				pow *= Math.pow(0.75, this.isDisabled());
+
+				if (this.has('bravery')) { pow *= 1.6 }
+				if (this.has('integrity')) { pow *= 1.4 }
+				if (this.has('patience')) { pow *= 1.4 }
 
 				return 1 - Math.pow(1 - chance, pow);
 			};
@@ -4732,6 +4783,9 @@ G={
 				if (this.has('frenzied')) { pow *= 0.65; }
 				if (this.has('determined')) { pow *= 0.85; }
 				if (this.has('invigorated')) { pow *= Math.pow(0.85, this.has('invigorated').power); }
+
+				if (this.has('bravery')) { pow *= 0.7 }
+				if (this.has('justice')) { pow *= 0.5 }
 	
 				return 1 - Math.pow(1 - chance, pow);
 			};
@@ -4757,6 +4811,9 @@ G={
 				if (this.has('frenzied')) { pow *= 0.65; }
 				if (this.has('heroic')) { pow *= 0.75; }
 				if (this.has('invigorated')) { pow *= Math.pow(0.8, this.has('invigorated').power); }
+
+				if (this.has('bravery')) { pow *= 0.7 }
+				if (this.has('justice')) { pow *= 0.5 }
 	
 				return 1 - Math.pow(1 - chance, pow);
 			};
@@ -4871,6 +4928,8 @@ G={
 				if (this.has('marksman')) { pow *= 0.5; }
 				if (this.has('the gift')) { pow *= 0.85; }
 				if (this.has('vigilant')) { pow *= 0.95; }
+
+				if (this.has('justice')) { pow *= 0.4 }
 
 				return 1 - Math.pow(1 - chance, pow);
 			};
@@ -5016,6 +5075,10 @@ G={
 				if (this.has('frenzied')) { pow *= 0.6; }
 				if (this.has('determined')) { pow *= 0.7; }
 
+				if (this.has('determination')) { pow *= 0.3 }
+				if (this.has('bravery')) { pow *= 0.5 }
+				if (this.has('justice')) { pow *= 0.7 }
+
 				return 1 - Math.pow(1 - chance, pow);
 			};
 			G.adjustFuncs.stabDamage = function(chance) {
@@ -5041,6 +5104,10 @@ G={
 				pow *= Math.pow(0.9, this.isDisabled());
 				pow *= Math.pow(0.75, this.isAiled());
 
+				if (this.has('determination')) { pow *= 2 }
+				if (this.has('bravery')) { pow *= 1.6 }
+				if (this.has('justice')) { pow *= 1.4 }
+
 				return 1 - Math.pow(1 - chance, pow);
 			};
 			G.adjustFuncs.stabDefense = function(chance) {
@@ -5057,6 +5124,10 @@ G={
 				if (this.has('parka') || this.has('dapper suit')) { pow *= 0.85; }
 				if (this.has('survivalist')) { pow *= 0.8; }
 				if (this.has('defensive')) { pow *= 0.8; }
+
+				if (this.has('monster soul')) { pow *= 1.2 }
+				if (this.has('bravery')) { pow *= 0.8 }
+				if (this.has('integrity')) { pow *= 0.6 }
 
 				return 1 - Math.pow(1 - chance, pow);
 			};
@@ -5263,6 +5334,9 @@ G={
 				pow *= Math.pow(1.25, this.isDisabled()); 
 				pow *= Math.pow(1.1, this.isAiled()); 
 
+				if (this.has('justice')) { pow *= 0.25 }
+				if (this.has('perserverance')) { pow *= 0.65 }
+
 				pow *= (e / 30);
 
 				return 1 - Math.pow(1 - chance, pow);
@@ -5280,6 +5354,10 @@ G={
 				
 				if (this.has('vigilant')) { pow *= 0.9; }
 				if (this.has('ninja') || this.has('haste')) { pow *= 0.9; }
+
+				if (this.has('bravery')) { pow *= 1.6 }
+				if (this.has('integrity')) { pow *= 1.4 }
+				if (this.has('patience')) { pow *= 1.4 }
 
 				pow *= Math.pow(1 / e, 0.025);
 
@@ -5302,6 +5380,10 @@ G={
 				if (this.has('defensive')) { pow *= 0.85; hasOne = true; }
 				if (this.has('vulnerable')) { pow *= 10; hasOne = true; }
 				if (!hasOne) { return chance - (chanceMinus?chanceMinus:0); }
+
+				if (this.has('monster soul')) { pow *= 1.2 }
+				if (this.has('bravery')) { pow *= 0.8 }
+				if (this.has('integrity')) { pow *= 0.6 }
 
 				pow *= Math.min(25 / e, 1);
 
@@ -5326,6 +5408,10 @@ G={
 				if (this.has('analytical')) { pow *= 0.8; }
 				if (this.has('frenzied')) { pow *= 0.75; }
 				if (this.has('determined')) { pow *= 0.9; }
+
+				if (this.has('justice')) { pow *= 0.5 }
+				if (this.has('perserverance')) { pow *= 0.6 }
+				if (this.has('patience')) { pow *= 0.6 }
 
 				return 1 - Math.pow(1 - chance, pow);
 			};
@@ -5411,6 +5497,10 @@ G={
 				if (this.has('frenzied')) { pow *= 0.75; }
 				if (this.has('invigorated')) { pow *= Math.pow(0.95, this.has('invigorated').power); }
 
+				if (this.has('justice')) { pow *= 0.6 }
+				if (this.has('perserverance')) { pow *= 0.75 }
+				if (this.has('patience')) { pow *= 0.75 }
+
 				return 1 - Math.pow(1 - chance, pow);
 			};
 			G.adjustFuncs.runFail = function(chance) {
@@ -5445,6 +5535,9 @@ G={
 				if (this.has('survivalist')) { pow *= 0.85; }
 				if (this.has('defensive')) { pow *= 0.9; }
 				//alright guys im done
+
+				if (this.has('monster soul')) { pow *= 1.25 }
+				if (this.has('integrity')) { pow *= 0.7 }
 
 				return 1 - Math.pow(1 - chance, pow);
 			}
@@ -5712,6 +5805,10 @@ G={
 				if (this.has('the gift')) { pow *= 0.9; }
 				if (this.has('determined')) { pow *= 0.95; }
 
+				if (this.has('justice')) { pow *= 0.65 }
+				if (this.has('perserverance')) { pow *= 0.85 }
+				if (this.has('integrity')) { pow *= 0.85 }
+
 				pow *= Math.max(Math.pow(e / 10, 1.5), e / 10);
 
 				return 1 - Math.pow(1 - chance, pow);
@@ -5732,6 +5829,9 @@ G={
 				if (this.has('parka')) { pow *= 0.9; }
 				if (this.has('wizard robe')) { pow *= 0.85; }
 				if (this.has('defensive')) { pow *= 0.8; }
+
+				if (this.has('monster soul')) { pow *= 1.25 }
+				if (this.has('integrity')) { pow *= 0.75 }
 
 				pow *= Math.min(10 / Math.pow(e + 1, 1.5), 3);
 				
@@ -5791,6 +5891,9 @@ G={
 				if (this.has('singed')) { pow *= Math.pow(1.05, this.has('singed').count); }
 				if (this.has('seared')) { pow *= Math.pow(0.85, this.has('seared').count); }
 				if (this.has('burnt')) { pow *= Math.pow(0.7, this.has('burnt').count); }
+
+				if (this.has('monster soul')) { pow *= 1.5 }
+				if (this.has('justice')) { pow *= 0.65 }
 
 				return 1 - Math.pow(1 - chance, pow);
 			};
@@ -6080,6 +6183,9 @@ G={
 				pow *= Math.pow(0.85, this.isInjured());
 				pow *= Math.pow(0.9, this.isAiled());
 				pow *= Math.pow(0.8, this.isDisabled());
+
+				if (this.has('determination')) { pow *= 0.6 }
+				if (this.has('monster soul')) { pow *= 0.85 }
 
 				return 1 - Math.pow(1 - chance, pow);
 			}
@@ -6693,6 +6799,9 @@ G={
 				if (this.has('survivalist')) { pow *= 0.85; }
 				if (this.has('ironskin')) { pow *= 0.5; }
 
+				if (this.has('monster soul')) { pow *= 1.25 }
+				if (this.has('integrity')) { pow *= 0.8 }
+
 				return 1 - Math.pow(1 - chance, pow);
 			}
 			new G.move({
@@ -6875,6 +6984,9 @@ G={
 				if (this.has('dapper suit')) { pow *= 0.9; }
 				if (this.has('knight armor')) { pow *= 0.2; }
 
+				if (this.has('monster soul')) { pow *= 1.25 }
+				if (this.has('integrity')) { pow *= 0.75 }
+
 				return 1 - Math.pow(1 - chance, pow);
 			};
 			new G.move({
@@ -6917,6 +7029,8 @@ G={
 				if (this.has('vigilant')) { pow *= 0.95; }
 				if (this.has('the gift')) { pow *= 0.6; }
 				if (this.has('goth')) { pow *= 0.6; }
+
+				if (this.has('perserverance')) { pow *= 0.6 }
 
 				return 1 - Math.pow(1 - chance, pow);
 			}
@@ -7001,6 +7115,9 @@ G={
 				if (this.has('ironskin')) { pow *= 0.6; }
 				if (this.has('infallible')) { pow *= 0.1; }
 				if (this.has('riot shield') || this.has('kite shield')) { pow *= 0.5; }
+
+				if (this.has('bravery')) { pow *= 0.8 }
+				if (this.has('integrity')) { pow *= 0.9 }
 
 				return 1 - Math.pow(1 - chance, pow);
 			};
@@ -7208,6 +7325,19 @@ G={
 				},
 				pReq: ['e:10']
 			});
+
+
+			// Soul Trait Mechanics - T.O.W.O.T.
+
+			new G.move({
+				chance: FORCE,
+				text: '[1]\'s body lies motionless on the ground... until, suddenly, [1:their] soul pieces itself back together and [1:they] come back [to life|from the dead], unscathed and invigorated - [1]\'s soul refused!',
+				req: ['dead !nihil refused'],
+				successFunc: function() {
+					this.revive();
+					this.lose('refused')
+				}
+			})
 			
 			G.parse = function(text,actors)
 			{
