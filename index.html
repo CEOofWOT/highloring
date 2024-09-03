@@ -14,7 +14,7 @@
 		//TODO : 
 			-more trait events and moves
 			-allow action func to override the text; this way, we can have special conditional events (ie. scrappy finding different kinds of items in one action)
-			-localstorage save
+			-localstorage save - Done, by T.O.W.O.T.
 			-load from pastebin
 			-better parsing : [1:they|does|do] (>he does, she does, they do), [1:they] find[-s|] (>he finds, she finds, they find)
 			-helping moves
@@ -544,14 +544,14 @@ G={
 			addEvent(l('darken'),'click',G.closePopup);
 			addEvent(l('closePopup'),'click',G.closePopup);
 			if (func) func();
-			//animAdd(l('popup'));
+			animAdd(l('popup'));
 		}
 		G.closePopup=function()
 		{
 			if (l('popup'))
 			{
+				animRemove(l('popup'));
 				l('popups').innerHTML='';
-				//animRemove(l('popup'));
 			}
 		}
 		addEvent(document,'keydown',function(e){if (e.key=='Escape'){G.closePopup();}});
@@ -859,7 +859,7 @@ G={
 		new G.perk({name:`nuclear bomb`,desc:`A nuke.`,tier:9});
 		
 		//creator
-		G.setupData=0;
+		G.setupData=(localStorage.storedSetup)?JSON.parse(localStorage.storedSetup):0;
 		G.creator=function()
 		{
 			G.exportSetup=function(data)
@@ -905,15 +905,24 @@ G={
 				{
 					var str=`
 						<header>Exporting setup</header>
-						<div>Copy this text. You can later import your setup by pasting this back in the import menu.</div>
+						<div id="exportDesc">Copy this text to later import your setup by pasting this back in the import menu, or save it to local storage to be loaded back in when you reopen the website.</div>
 						<textarea id="textareaPrompt" style="width:100%;height:128px;" readonly>${JSON.stringify(o)}</textarea>
 					`;
 					G.popup(str,function(){
 						l('textareaPrompt').focus();
 						l('textareaPrompt').select();
+						l('closePopup').insertAdjacentHTML('beforebegin','<div id="storeSetup" class="button bigButton">Save to local storage</div>');
+						addEvent(l('storeSetup'),'click',function(){
+							try {
+								localStorage.setItem('storedSetup',JSON.stringify(o));
+								l('exportDesc').innerHTML=`<span>Setup saved to local storage!</span>`;
+							}
+							catch(e) {
+								l('exportDesc').innerHTML=`<span style="color:#e2461f;">Looks like that setup failed to save to local storage, sorry!</span>`;
+								triggerAnim(l('importDesc'),'pucker');
+							}
+						});
 					});
-					
-					//localStorage.setItem('murderGames',JSON.stringify(o));
 				}
 				else return o;
 			}
@@ -1324,6 +1333,12 @@ G={
 				});
 				addEvent(l(char.l.id+'-name'),'input',function(){
 					char.name=l(char.l.id+'-name').value;
+				});
+				addEvent(l(char.l.id+'-gender'),'input',function(){
+					char.gender=l(char.l.id+'-gender').value;
+				});
+				addEvent(l(char.l.id+'-tier'),'input',function(){
+					char.tier=l(char.l.id+'-tier').value;
 				});
 				addEvent(l(char.l.id+'-picUrl'),'input',function(){
 					var val=l(char.l.id+'-picUrl').value;
