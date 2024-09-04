@@ -403,6 +403,7 @@
 
 //lib
 l=function(d){return document.getElementById(d);};
+q=function(d){return document.querySelectorAll(d)}
 c=function(a){return a[Math.floor(Math.random()*a.length)];};
 
 shuffle=function(a){
@@ -601,7 +602,27 @@ G={
 			G.glob.subPerks = []
 		new G.perk({name:`soulless`,desc:`Is unable to feel love, joy or compassion.`,subPerks:['sociopath','unstable','devious'], update: function() { for (let i of ['peaceful','kind']) { if (this.owner.has(i)) { this.owner.lose(i, true); } } }})
 		new G.perk({name:`monster soul`,desc:`Are mostly made of magic. Weaker than humans.`,subPerks:['meek','artist']})
-		new G.perk({name:`determination`,desc:`Try as they might, they continue to be themself.`,subPerks:[`leader`,`stubborn`,`determined`], init: { revives: 1 }, onDeath: function() { if (this.revives) { this.owner.gain('refused') }; this.revives--; } })
+
+		new G.perk({
+			name:`determination`,
+			desc:`Try as they might, they continue to be themself.`,
+			subPerks:[`leader`,`stubborn`,`determined`],
+			init: {
+				save: {},
+				saves: 0,
+			},
+			save: function() {
+				this.save = this.owner
+				saves++
+				this.owner.gain('saved')
+			},
+			load: function() {
+				this.owner = this.save
+				save = {}
+				this.owner.lose('saved')
+			}
+		})
+
 		new G.perk({name:`bravery`,desc:`Rushes fist-first through all of their obstacles.`,subPerks:[`bulky`,`stubborn`,`haste`]})
 		new G.perk({name:`justice`,desc:`Puts an end to their opponent with their sure-fire accuracy.`,subPerks:[`marksman`,`stubborn`,`vigilant`]})
 		new G.perk({name:`integrity`,desc:`Pulls themself through with their original style.`,subPerks:[`survivalist`,`stubborn`]})
@@ -770,7 +791,7 @@ G={
 
 
 		// Additional Flags / Statuses - T.O.W.O.T.
-		new G.perk({name:`refused`,desc:`But it refused.`,disable:false,injury:false})
+		new G.perk({name:`saved`,desc:`Has made a save.`,disable:false,injury:false})
 
 		
 		G.glob={type:'item'};
@@ -883,7 +904,8 @@ G={
 						{
 							var member=base.members[i];
 							member.name=l(member.l.id+'-name').value;
-							member.gender=parseInt(l(member.l.id+'-gender').options[l(member.l.id+'-gender').selectedIndex].value);
+							member.gender=Array.from(q('#'+member.l.id+'-gender option:checked')).map(option => Number(option.value));
+							member.pronouns=Array.from(q('#'+member.l.id+'-pronouns option:checked')).map(option => Number(option.value));
 							member.tier=parseInt(l(member.l.id+'-tier').options[l(member.l.id+'-tier').selectedIndex].value);
 							var val=member.pic;
 							if (val.length<3) member.pic='';
@@ -896,7 +918,7 @@ G={
 								if (perk.name!='no perk' && perk.name!='no item' && (perk.type!='trait' || perks.indexOf(perk.name)==-1)) perks.push(perk.name);
 								perkN++;
 							}
-							o.chars.push({name:member.name,g:member.gender,t:member.tier,pic:member.pic,team:member.team.name,perks:perks});
+							o.chars.push({name:member.name,g:member.gender,p:member.pronouns,t:member.tier,pic:member.pic,team:member.team.name,perks:perks});
 						}
 						o.teams.push({name:base.name});
 					}
@@ -905,21 +927,60 @@ G={
 				{
 					var str=`
 						<header>Exporting setup</header>
-						<div id="exportDesc">Copy this text to later import your setup by pasting this back in the import menu, or save it to local storage to be loaded back in when you reopen the website.</div>
+						<div id="exportDesc">Copy or download this text to later import your setup in the import menu or save it to local storage to be loaded back in when you reopen the website.</div>
 						<textarea id="textareaPrompt" style="width:100%;height:128px;" readonly>${JSON.stringify(o)}</textarea>
 					`;
 					G.popup(str,function(){
 						l('textareaPrompt').focus();
 						l('textareaPrompt').select();
 						l('closePopup').insertAdjacentHTML('beforebegin','<div id="storeSetup" class="button bigButton">Save to local storage</div>');
+						l('closePopup').insertAdjacentHTML('beforebegin','<div id="downloadSetup" class="button bigButton">Download setup</div>');
 						addEvent(l('storeSetup'),'click',function(){
 							try {
 								localStorage.setItem('storedSetup',JSON.stringify(o));
 								l('exportDesc').innerHTML=`<span>Setup saved to local storage!</span>`;
 							}
 							catch(e) {
-								l('exportDesc').innerHTML=`<span style="color:#e2461f;">Looks like that setup failed to save to local storage, sorry!</span>`;
-								triggerAnim(l('importDesc'),'pucker');
+								l('exportDesc').innerHTML=`<span style="color:#e2461f;">Looks like this setup failed to save to local storage, sorry!</span>`;
+								triggerAnim(l('exportDesc'),'pucker');
+							}
+						});
+						addEvent(l('downloadSetup'),'click',function(){
+							try {
+								/* Just in case
+								var a = document.createElement("a");
+		  						var file = new Blob([JSON.stringify(o)], { type: "application/json" });
+		  						a.href = URL.createObjectURL(file);
+		  						a.download = "setup.json";
+		 						a.click();
+								a.remove();
+								*/
+								async function downloadFile() {
+									var writeableSteam = null
+
+									var handle = await window.showSaveFilePicker({
+										suggestedName: 'setup.json',
+										types: [ {description: "Setups", accept: { "application/json": [".json"] } } ],
+  										excludeAcceptAllOption: true,
+ 										multiple: false,
+									});
+
+    								writableStream = await handle.createWritable({
+      									keepExistingData: true,
+      									mode: "exclusive",
+   									});
+									
+									await writableStream.write(JSON.stringify(o));
+								 	await writableStream.close();
+
+									writableStream = null;
+								};
+
+								downloadFile().then(() => l('exportDesc').innerHTML=`<span>Setup downloaded!</span>`);
+							}
+							catch(e) {
+								l('exportDesc').innerHTML=`<span style="color:#e2461f;">Looks like this setup failed to download, sorry!</span>`;
+								triggerAnim(l('exportDesc'),'pucker');
 							}
 						});
 					});
@@ -938,7 +999,7 @@ G={
 					perkN++;
 				}
 
-				var o={name:char.name,g:char.gender,t:char.tier,pic:char.pic,perks:perks}
+				var o={name:char.name,g:char.gender,p:char.pronouns,t:char.tier,pic:char.pic,perks:perks}
 				
 				var str=`
 					<header>Exporting character setup</header>
@@ -958,23 +1019,54 @@ G={
 				{
 					var str=`
 						<header>Importing setup</header>
-						<div style="overflow:hidden;"><div id="importDesc">Paste in the text you were given on setup export.</div></div>
+						<div style="overflow:hidden;"><div id="importDesc">Paste in the text or upload the file you were given on setup export.</div></div>
 						<textarea id="textareaPrompt" style="width:100%;height:128px;"></textarea>
 					`;
 					G.popup(str,function(){
 						l('textareaPrompt').focus();
 						l('closePopup').innerHTML='Cancel';
 						l('closePopup').insertAdjacentHTML('beforebegin','<div id="confirmPopup" class="button bigButton">Load</div>');
+						l('closePopup').insertAdjacentHTML('beforebegin','<div id="uploadSetup" class="button bigButton">Upload setup</div>');
 						addEvent(l('confirmPopup'),'click',function(){
 							var str=l('textareaPrompt').value;
 							if ((str.length>0) && G.importSetup(str)) G.closePopup();
 							else {l('importDesc').innerHTML=`<span style="color:#e2461f;">Looks like that's not a valid setup string, sorry!</span>`;triggerAnim(l('importDesc'),'pucker');}
+						});
+						addEvent(l('uploadSetup'),'click',function(){
+							try {
+								async function uploadFile() {
+  									var [file] = await window.showOpenFilePicker({
+										types: [ {description: "Setups", accept: { "application/json": [".json"] } } ],
+  										excludeAcceptAllOption: true,
+ 										multiple: false,
+									});
+  									return await file.getFile();
+								};
+
+								async function readFile(file) {
+  									return await file.text();
+								};
+
+								uploadFile().then(readFile).then(G.importSetup).then(G.closePopup);
+							}
+							catch(e) {
+								console.log(e)
+								l('importDesc').innerHTML=`<span style="color:#e2461f;">Looks like this setup failed to upload, sorry!</span>`;
+								triggerAnim(l('importDesc'),'pucker');
+							}
 						});
 					});
 				}
 				else
 				{
 					var o={};
+					/*
+					if (str.includes('pastebin.com')) {
+						str=str.replace('.com','.com/raw')
+						fetch(str).then(a=>a.text().then(str=a));
+					}
+					console.log(str)
+					*/
 					try{o=JSON.parse(str);}catch(e){o=0;}
 					if (!o || !o.teams || !o.chars) return false;
 					//l('creator').innerHTML='';
@@ -995,7 +1087,8 @@ G={
 					{
 						teams[o.chars[i].team].chars.push({
 							name:STRCLN(o.chars[i].name),
-							gender:INTCLN(o.chars[i].g),
+							gender:o.chars[i].g||[c([0,1,2,3,-1])],
+							pronouns:o.chars[i].p||[c([0,1,2,3])],
 							tier:INTCLN(o.chars[i].t||0),
 							pic:STRCLN(o.chars[i].pic),
 							perks:o.chars[i].perks,
@@ -1035,7 +1128,7 @@ G={
 					try{o=JSON.parse(str);}catch(e){o=0;}
 					if (!o) return false
 
-					o={name:STRCLN(o.name),gender:INTCLN(o.g),tier:INTCLN(o.t||0),pic:STRCLN(o.pic),perks:o.perks,l:char.l,id:char.id}
+					o={name:STRCLN(o.name),gender:o.g||[c([0,1,2,3,-1])],pronouns:o.p||[c([0,1,2,3])],tier:INTCLN(o.t||0),pic:STRCLN(o.pic),perks:o.perks,l:char.l,id:char.id}
 
 					addChar(team, o)
 					return true
@@ -1212,20 +1305,21 @@ G={
 			let addChar=function(team,o)
 			{
 				var o=o||{};
-				var gender=(typeof o.gender !== 'undefined')?o.gender:c([0,0,0,1,1,1,2]);
+				var gender=(typeof o.gender !== 'undefined')?o.gender:[c([0,1,2,3])];
+				var pronouns=(typeof o.pronouns !== 'undefined')?o.pronouns:[c([0,1,2,3,-1])];
 				var tier=(typeof o.tier !== 'undefined')?o.tier:0;
 				var name='';
 				if (o.name) name=o.name;
 				else
 				{
-					var freeNames=(gender==0?(randNamesM.slice(0)):gender==1?(randNamesF.slice(0)):(randNamesM.slice(0).concat(randNamesF.slice(0))));
+					var freeNames=(gender[0]==0?(randNamesM.slice(0)):gender[0]==1?(randNamesF.slice(0)):(randNamesM.slice(0).concat(randNamesF.slice(0))));
 					for (var i in G.teams){for (var ii in G.teams[i].members){if (freeNames.indexOf(G.teams[i].members[ii].name)!=-1) freeNames.splice(freeNames.indexOf(G.teams[i].members[ii].name),1);}}
 					if (freeNames.length==0) freeNames.push('Nobody');
 					name=c(freeNames);
 				}
 				if (o.domN) domN=o.id
 				
-				let char={team:team,name:name,pic:o.pic||'defPic.jpg',gender:gender,tier:tier,perks:[],l:0,id:domN};
+				let char={team:team,name:name,pic:o.pic||'defPic.jpg',gender:gender,pronouns:pronouns,tier:tier,perks:[],l:0,id:domN};
 				if (!o.id) l(team.l.id+'-members').insertAdjacentHTML('beforeend','<div class="char hasHandle" id="dom'+domN+'"></div>');
 				char.l=(typeof o.l !== 'undefined')?o.l:l('dom'+domN);
 				
@@ -1314,7 +1408,8 @@ G={
 					<div class="handle"></div>
 					<div class="picBox"><img src="${char.pic||'defPic.jpg'}" id="${char.l.id+'-pic'}" class="pic"/></div>
 					Name : <input type="text" size="14" id="${char.l.id+'-name'}" value="${char.name}"/> 
-					<select id="${char.l.id+'-gender'}"><option value="0"${char.gender==0?' selected="selected"':''}>he</option><option value="1"${char.gender==1?' selected="selected"':''}>she</option><option value="2"${char.gender==2?' selected="selected"':''}>they</option><option value="3"${char.gender==3?' selected="selected"':''}>it</option><option value="-1"${char.gender==-1?' selected="selected"':''}>any</option></select> 
+					<select id="${char.l.id+'-gender'}" multiple><option value="0"${char.gender.includes(0)?' selected="selected"':''}>male</option><option value="1"${char.gender.includes(1)?' selected="selected"':''}>female</option><option value="2"${char.gender.includes(2)?' selected="selected"':''}>non-binary</option><option value="3"${char.gender.includes(3)?' selected="selected"':''}>unknown</option></select> 
+					<select id="${char.l.id+'-pronouns'}" multiple><option value="0"${char.pronouns.includes(0)?' selected="selected"':''}>he</option><option value="1"${char.gender.includes(1)?' selected="selected"':''}>she</option><option value="2"${char.pronouns.includes(2)?' selected="selected"':''}>they</option><option value="3"${char.pronouns.includes(3)?' selected="selected"':''}>it</option><option value="-1"${char.pronouns.includes(-1)?' selected="selected"':''}>any</option></select> 
 					<select id="${char.l.id+'-tier'}"><option title="Character acts every round." value="0"${char.tier==0?' selected="selected"':''}>main</option><option title="Character only acts every now and then." value="1"${char.tier==1?' selected="selected"':''}>minor</option></select> 
 					Pic URL : <input type="text" size="24" id="${char.l.id+'-picUrl'}" value="${char.pic}"/>
 					<br>
@@ -1335,7 +1430,10 @@ G={
 					char.name=l(char.l.id+'-name').value;
 				});
 				addEvent(l(char.l.id+'-gender'),'input',function(){
-					char.gender=l(char.l.id+'-gender').value;
+					char.gender=Array.from(q('#'+char.l.id+'-gender option:checked')).map(option => Number(option.value));
+				});
+				addEvent(l(char.l.id+'-pronouns'),'input',function(){
+					char.pronouns=Array.from(q('#'+char.l.id+'-pronouns option:checked')).map(option => Number(option.value));
 				});
 				addEvent(l(char.l.id+'-tier'),'input',function(){
 					char.tier=l(char.l.id+'-tier').value;
@@ -1493,7 +1591,8 @@ G={
 					char.name = creator.name + '\'s ' + idPerk.name;
 					char.team = creator.team;
 					char.pic = creator.pic;
-					char.gender = 3;
+					char.gender = [c([0,1,2,3,-1])];
+					char.pronouns = [c([0,1,2,3])];
 				}
 				if (overseer) {
 					char.combat = new G.combatTracker(overseer);
@@ -1712,7 +1811,8 @@ G={
 				{
 					var member=base.members[i];
 					member.name=STRCLN(l(member.l.id+'-name').value);
-					member.gender=INTCLN(parseInt(l(member.l.id+'-gender').options[l(member.l.id+'-gender').selectedIndex].value));
+					member.gender=Array.from(q('#'+member.l.id+'-gender option:checked')).map(option => Number(option.value));
+					member.pronouns=Array.from(q('#'+member.l.id+'-pronouns option:checked')).map(option => Number(option.value));
 					member.tier=INTCLN(parseInt(l(member.l.id+'-tier').options[l(member.l.id+'-tier').selectedIndex].value));
 					var val=STRCLN(member.pic);
 					if (val.length<3) member.pic='defPic.jpg';
@@ -1726,7 +1826,7 @@ G={
 						if (perk.name!='no perk' && perk.name!='no item' && (perk.type!='trait' || perks.indexOf(perk)==-1)) { perks.push(new G.perkToken(perk, null)); }
 						perkN++;
 					}
-					var me=new G.char({name:member.name,pic:member.pic,perks:perks,gender:member.gender,tier:member.tier});
+					var me=new G.char({name:member.name,pic:member.pic,perks:perks,gender:member.gender,pronouns:member.pronouns,tier:member.tier});
 					members.push(me);
 					for (let i of me.perks) {
 						i.owner = me;
@@ -3077,23 +3177,56 @@ G={
 
 			// Soul Trait Mechanics - T.O.W.O.T.
 
-			new G.act(FORCE,['dead !nihil refused'],`[1] may have died... but [1:their] soul refused!<br>[1] [comes back to life|is [brought back from the dead|revived]], [1:their] soul reformed and [1:their] body unscathed.`,p=>{p[1].revive();p[1].lose('refused');})
+			// new G.act(FORCE,['dead !nihil refused'],`[1] may have died... but [1:their] soul refused!<br>[1] [comes back to life|is [brought back from the dead|revived]], [1:their] soul reformed and [1:their] body unscathed.`,p=>{p[1].revive();p[1].lose('refused');})
 			
-			/*
-			//just a test
+			
 			new G.act(1,['','+'],``,p=>{
+				var parents=[p[1],p[2]]
+				var name="";
+
+				var first=c(parents)
+				var second=parents.find((parent) => parent != first)
+
+				name=first.name.slice(0,randomFloor(first.name.length/2)) + second.name.slice(randomFloor(second.name.length/2))
+
 				var traitsList=[];
-				for (var i in G.perks)
-				{
-					var me=G.perks[i];
-					if (me.def && me.type=='trait') traitsList.push(me);
-				}
-				var me=new G.char({name:c(['Bob','Bub','Blob','Brob','Blib','Blug','Blab'])+c(['ert','urt','art','ard','by']),pic:c([p[1],p[2]]).pic,perks:[c(traitsList),c(traitsList)],gender:c([0,0,0,1,1,1,2])});
-				me.join(p[1].team);
 				
+				traitsList.push(c(parents).perks.find((perk) => perk.perk.type=='soulTrait').perk.name)
+				for (let i in parents) {
+					var traits=parents[i].perks.filter((trait) => trait.perk.def && trait.perk.type=='trait').map((trait) => trait.perk.name)
+					var traitsAmount=randomFloor(traits.length/2)
+					var inheritedTraits=[]
+
+					for (let ii = 0; ii < traitsAmount; ii++) {
+						var inheritedTrait=c(traits)
+						traits.splice(traits.indexOf(inheritedTrait),1)
+						inheritedTraits.push(inheritedTrait)
+					}
+					
+					traitsList.push(inheritedTraits)
+				}
+				traitsList=traitsList.flat()
+
+				var me=new G.char({
+					name:name,
+					pic:c(parents).pic,
+					perks:traitsList.map((trait) => new G.perkToken(G.perksBN[trait], me)),
+					gender:[c([0,1,2,3,-1])],
+					pronouns:[c([0,1,2,3])],
+					parents:parents,
+				})
+				for (let i of me.perks) {
+					i.owner = me;
+					if (i.perk.type=='soulTrait') {
+						for (let ii of i.subPerks) {
+							ii.owner = me;
+						}
+					}
+				}
+				me.join(choose(parents).team)
+
 				return `[BLUE][1] and [2] decide to have a child!<br>They name the child <e>${me.name}</e>.`;
 			});
-			*/
 			
 			for (var i in G.acts)
 			{
@@ -7412,6 +7545,7 @@ G={
 
 			// Soul Trait Mechanics - T.O.W.O.T.
 
+			/*
 			new G.move({
 				chance: FORCE,
 				text: '[1]\'s body lies motionless on the ground... until, suddenly, [1:their] soul pieces itself back together and [1:they] come back [to life|from the dead], unscathed and invigorated - [1]\'s soul refused!',
@@ -7421,6 +7555,7 @@ G={
 					this.lose('refused')
 				}
 			})
+			*/
 			
 			G.parse = function(text,actors)
 			{
@@ -7474,22 +7609,20 @@ G={
 								if (!isNaN(bits[0]) && actors[parseInt(bits[0])-1])
 								{
 									var actor=actors[parseInt(bits[0])-1];
-									var gender=actor.gender
-									if (gender==-1) {
-										gender=Math.floor(Math.random()*4)
-									}
+									var pronouns=c(actor.pronouns)
+									if (pronouns==-1) pronouns=c([0,1,2,3])
 									if (prop=='g')
 									{
-										out+=G.parse([bits[1],bits[2],bits[3],bits[4]][gender].replaceAll('{PIPE}','|').replaceAll('{COLON}',':'),actors);
+										out+=G.parse([bits[1],bits[2],bits[3],bits[4]][pronouns].replaceAll('{PIPE}','|').replaceAll('{COLON}',':'),actors);
 									}
-									else if (prop=='they') {out+=['he','she','they','it'][gender];}
-									else if (prop=='They') {out+=['He','She','They','It'][gender];}
-									else if (prop=='them') {out+=['him','her','them','it'][gender];}
-									else if (prop=='Them') {out+=['Him','Her','Them','It'][gender];}
-									else if (prop=='their') {out+=['his','her','their','its'][gender];}
-									else if (prop=='Their') {out+=['His','Her','Their','Its'][gender];}
-									else if (prop=='themself' || prop=='themselves') {out+=['himself','herself','themself','itself'][gender];}
-									else if (prop=='Themself' || prop=='Themselves') {out+=['Himself','Herself','Themself','Itself'][gender];}
+									else if (prop=='they') {out+=['he','she','they','it'][pronouns];}
+									else if (prop=='They') {out+=['He','She','They','It'][pronouns];}
+									else if (prop=='them') {out+=['him','her','them','it'][pronouns];}
+									else if (prop=='Them') {out+=['Him','Her','Them','It'][pronouns];}
+									else if (prop=='their') {out+=['his','her','their','its'][pronouns];}
+									else if (prop=='Their') {out+=['His','Her','Their','Its'][pronouns];}
+									else if (prop=='themself' || prop=='themselves') {out+=['himself','herself','themself','itself'][pronouns];}
+									else if (prop=='Themself' || prop=='Themselves') {out+=['Himself','Herself','Themself','Itself'][pronouns];}
 									else out+='<e>'+actor.name+'</e>';
 								}
 								else out+='<e>[invalid actor : '+bits[0]+']</e>';
@@ -7625,7 +7758,7 @@ G={
 								pics+=`<img src="${chars[ii].pic}" class="pic" title="${chars[ii].name}"/>`;
 								if (chars[ii].has('dead')) pics+=`<div class="picSkull"></div>`;
 							}
-							str+=`<div class="box action${action.classes?(' '+action.classes):''}"><div>${pics}</div><div>${action.text}</div></div>`;
+							str+=`<div class="box action${action.classes?(' '+action.classes):''}"><div>${pics}</div><div>${action.text}</div><div style="opacity:0.5;font-size:10px;float:right;">${choice.chance!=-100?(choice.chance).toString()+'%':'100%'}</div><br></div>`;
 						}
 					}
 					else if (me instanceof G.combatOverseer) {
@@ -7675,9 +7808,9 @@ G={
 				}*/
 				
 				l('round').innerHTML=str;
-				/*var nodes=l('round').getElementsByClassName('action');
-					for (var i=nodes.length-1;i>=0;i--){animRemove(nodes[i]);}
-				l('round').insertAdjacentHTML('afterbegin',str);*/
+				var nodes=l('round').getElementsByClassName('action');
+				for (var i=nodes.length-1;i>=0;i--){animRemove(nodes[i]);}
+				l('round').insertAdjacentHTML('afterbegin',str);
 				if (!G.autoroundOn)
 				{
 					var nodes=l('round').getElementsByClassName('action');
