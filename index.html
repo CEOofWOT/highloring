@@ -1087,8 +1087,8 @@ G={
 					{
 						teams[o.chars[i].team].chars.push({
 							name:STRCLN(o.chars[i].name),
-							gender:o.chars[i].g||[c([0,1,2,3,-1])],
-							pronouns:o.chars[i].p||[c([0,1,2,3])],
+							gender:[o.chars[i].g].flat()||[c([0,1,2,3,-1])],
+							pronouns:[o.chars[i].p].flat()||[c([0,1,2,3])],
 							tier:INTCLN(o.chars[i].t||0),
 							pic:STRCLN(o.chars[i].pic),
 							perks:o.chars[i].perks,
@@ -1128,7 +1128,7 @@ G={
 					try{o=JSON.parse(str);}catch(e){o=0;}
 					if (!o) return false
 
-					o={name:STRCLN(o.name),gender:o.g||[c([0,1,2,3,-1])],pronouns:o.p||[c([0,1,2,3])],tier:INTCLN(o.t||0),pic:STRCLN(o.pic),perks:o.perks,l:char.l,id:char.id}
+					o={name:STRCLN(o.name),gender:[o.g].flat()||[c([0,1,2,3,-1])],pronouns:[o.p].flat()||[c([0,1,2,3])],tier:INTCLN(o.t||0),pic:STRCLN(o.pic),perks:o.perks,l:char.l,id:char.id}
 
 					addChar(team, o)
 					return true
